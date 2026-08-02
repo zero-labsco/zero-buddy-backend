@@ -161,6 +161,8 @@ fn print_banner(product: &str, bind: &str, online: bool) {
     } else {
         "OFFLINE · knowledge base only"
     };
+    // 版本号从 Cargo.toml 的 [package].version 注入，编译期确定。
+    let version = env!("CARGO_PKG_VERSION");
     // 优先读取 banner.txt（可用记事本随时修改大字样式）；读取失败则用内置回退。
     let raw = std::fs::read_to_string("banner.txt").unwrap_or_else(|_| DEFAULT_BANNER.to_string());
     // 给大字上青绿色；其余行（端口/模式）由下方模板单独上色。
@@ -170,8 +172,8 @@ fn print_banner(product: &str, bind: &str, online: bool) {
         .collect::<Vec<_>>()
         .join("\n");
     println!(
-        "\n{}\n\n\x1b[1m  {:<54}\x1b[0m\n\x1b[2m  listening : http://{:<38}\x1b[0m\n\x1b[2m  mode      : {:<38}\x1b[0m\n",
-        art, product, bind, mode
+        "\n{}\n\n\x1b[1m  {:<54}\x1b[0m\n\x1b[2m  version   : {:<38}\x1b[0m\n\x1b[2m  listening : http://{:<38}\x1b[0m\n\x1b[2m  mode      : {:<38}\x1b[0m\n",
+        art, product, version, bind, mode
     );
 }
 
