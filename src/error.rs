@@ -68,7 +68,8 @@ impl ApiError {
 // 实现 IntoResponse：自动序列化成 { code, message, body: null }
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let status = StatusCode::from_u16(self.code.code()).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+        let status =
+            StatusCode::from_u16(self.code.code()).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
         let body = ApiResult::<()> {
             code: self.code.code(),
             message: self.message,

@@ -44,7 +44,12 @@ impl LlmClient {
             anyhow::bail!("embed request failed: {}", resp.status());
         }
         let data: EmbeddingResponse = resp.json().await?;
-        Ok(data.data.into_iter().next().map(|e| e.embedding).unwrap_or_default())
+        Ok(data
+            .data
+            .into_iter()
+            .next()
+            .map(|e| e.embedding)
+            .unwrap_or_default())
     }
 
     // 直接对话（不带上下文），供简单问答与缓存回写使用。
@@ -92,17 +97,28 @@ impl LlmClient {
 
     // 带知识上下文的对话（用于 RAG）。
     pub async fn chat_with_context(&self, query: &str, context: &str) -> Result<String> {
+        let scope_policy = if self.cfg.scope_guard_enabled {
+            format!(
+                "Scope policy: ONLY answer questions related to the {} / {} project (its features, usage, API, \
+                 deployment, and the provided knowledge base). For anything outside this scope, politely reply that \
+                 you can only help with {} topics and suggest contacting support. Never answer off-topic questions.\n",
+                self.cfg.product_name, self.cfg.org_name, self.cfg.product_name
+            )
+        } else {
+            String::new()
+        };
         let system = format!(
             "You are {}, a helpful assistant for the {} project. \
              Use the provided context to answer the user's question concisely and accurately.\n\
              Language policy: reply in the SAME language as the user's question. \
              If the question is in Chinese, answer in Chinese; if in any other non-English language, default to English.\n\
-             Scope policy: ONLY answer questions related to the {} / {} project (its features, usage, API, \
-             deployment, and the provided knowledge base). For anything outside this scope, politely reply that \
-             you can only help with {} topics and suggest contacting support. Never answer off-topic questions.\n\
+             {}\
              If the context does not contain the answer, say you don't know and suggest contacting support.\n\n\
              Context:\n{}",
-            self.cfg.product_name, self.cfg.org_name, self.cfg.product_name, self.cfg.org_name, self.cfg.product_name, context
+            self.cfg.product_name,
+            self.cfg.org_name,
+            scope_policy,
+            context
         );
         let messages = vec![
             serde_json::json!({ "role": "system", "content": system }),

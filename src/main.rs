@@ -8,18 +8,21 @@ mod llm;
 mod logging;
 mod models;
 mod rag;
+mod ratelimit;
 mod routes;
 mod state;
 
 use axum::http::Method;
+use axum::serve::serve;
+use cache::AnswerCache;
 use config::Config;
 use llm::LlmClient;
-use cache::AnswerCache;
 use state::AppState;
-use tower_http::cors::{Any, CorsLayer};
-use tower_http::timeout::TimeoutLayer;
-use tower_http::limit::RequestBodyLimitLayer;
+use std::net::SocketAddr;
 use std::time::Duration;
+use tower_http::cors::{Any, CorsLayer};
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
 use tracing::info;
 
 #[tokio::main]
@@ -62,6 +65,7 @@ async fn main() {
         client,
         cache,
         online: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(online)),
+        rate_limiter: ratelimit::RateLimiter::new(),
     };
 
     // CORS：收敛到指定前端来源，而非任意来源
@@ -95,7 +99,9 @@ async fn main() {
         .layer(TimeoutLayer::with_status_code(
             axum::http::StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(cfg.request_timeout_secs() + 5),
-        ));
+        ))
+        // 让 handler 能拿到真实客户端 IP（ConnectInfo<SocketAddr>）
+        .into_make_service_with_connect_info::<SocketAddr>();
 
     let bind = std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3031".into());
     let listener = match tokio::net::TcpListener::bind(&bind).await {
@@ -113,7 +119,7 @@ async fn main() {
     // 避免 Windows 上出现 STATUS_CONTROL_C_EXIT (0xc000013a) 的红色报错，
     // 也支持 Linux 服务器经 systemctl stop / docker stop 发来的 SIGTERM。
     tokio::select! {
-        res = axum::serve(listener, app) => {
+        res = serve(listener, app) => {
             if let Err(e) = res {
                 tracing::error!("server error: {:#}", e);
                 std::process::exit(1);
@@ -134,7 +140,8 @@ async fn shutdown_signal() -> &'static str {
     {
         use tokio::signal::unix::{signal, SignalKind};
         let mut sigint = signal(SignalKind::interrupt()).expect("failed to install SIGINT handler");
-        let mut sigterm = signal(SignalKind::terminate()).expect("failed to install SIGTERM handler");
+        let mut sigterm =
+            signal(SignalKind::terminate()).expect("failed to install SIGTERM handler");
         tokio::select! {
             _ = sigint.recv() => "SIGINT",
             _ = sigterm.recv() => "SIGTERM",
@@ -151,7 +158,11 @@ async fn shutdown_signal() -> &'static str {
 /// 启动成功后打印的 ASCII 横幅：从 banner.txt 读取大字 + 监听地址与运行模式。
 /// banner.txt 不存在时回退到内置默认大字，保证服务始终能启动。
 fn print_banner(product: &str, bind: &str, online: bool) {
-    let mode = if online { "ONLINE · AI answers enabled" } else { "OFFLINE · knowledge base only" };
+    let mode = if online {
+        "ONLINE · AI answers enabled"
+    } else {
+        "OFFLINE · knowledge base only"
+    };
     // 优先读取 banner.txt（可用记事本随时修改大字样式）；读取失败则用内置回退。
     let raw = std::fs::read_to_string("banner.txt").unwrap_or_else(|_| DEFAULT_BANNER.to_string());
     // 给大字上青绿色；其余行（端口/模式）由下方模板单独上色。

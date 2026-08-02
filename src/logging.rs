@@ -20,8 +20,7 @@ pub fn init() {
     // 用 leak 让其生命周期贯穿整个进程（日志组件本就是进程级单例）。
     Box::leak(Box::new(guard));
 
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     // 控制台层：带颜色、可读性好。不显示 target（本就是后端日志，crate 名无意义）。
     let stdout_layer = fmt::layer()

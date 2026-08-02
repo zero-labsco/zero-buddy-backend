@@ -1,6 +1,7 @@
 use crate::cache::AnswerCache;
 use crate::config::Config;
 use crate::llm::LlmClient;
+use crate::ratelimit::RateLimiter;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
@@ -14,4 +15,6 @@ pub struct AppState {
     // 用 AtomicBool 以便运行时在「鉴权/额度错误」时动态降级为离线，
     // 对所有后续请求立即生效（Atomic 保证多线程可见性）。
     pub online: Arc<AtomicBool>,
+    // 基于客户端 IP 的速率限制（防滥用 / 控成本）
+    pub rate_limiter: RateLimiter,
 }

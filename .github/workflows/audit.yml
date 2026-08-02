@@ -1,0 +1,71 @@
+name: Dependency Audit & Auto-Fix
+
+# 自动检查 Rust 后端依赖的安全漏洞（RUSTSEC advisories）：
+# 每周一 09:30 UTC 自动跑 cargo audit；若发现漏洞，开一个 PR（标题符合
+# Conventional Commits，不会自动合并，需人工 review）。
+# 注：cargo-audit 修复通常需要升级 Cargo 依赖版本，这里仅负责“发现并提 PR”，
+# 具体升级在 PR 内由维护者执行（避免破坏性自动改 Cargo.toml）。
+# 也可在 Actions 页面手动触发。
+
+on:
+  schedule:
+    - cron: "30 9 * * 1" # 每周一 09:30 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  audit:
+    name: cargo audit & report PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Run cargo audit
+        id: audit
+        continue-on-error: true
+        run: |
+          if cargo audit --deny warnings; then
+            echo "has_vulns=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vulns=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop if no vulnerabilities
+        if: steps.audit.outputs.has_vulns == 'false'
+        run: echo "✅ No RUSTSEC vulnerabilities found. Nothing to do."
+
+      - name: Create Pull Request (audit report)
+        if: steps.audit.outputs.has_vulns == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): address cargo audit vulnerabilities"
+          branch: chore/auto-fix-cargo-audit
+          delete-branch: true
+          title: "chore(deps): address cargo audit vulnerabilities"
+          body: |
+            ## Automated Rust dependency security report
+
+            This PR was created automatically by the **Dependency Audit & Auto-Fix** workflow
+            after `cargo audit --deny warnings` detected vulnerabilities in backend dependencies.
+
+            - The actual fix usually means bumping the affected crate versions in `Cargo.toml`.
+            - Please review `cargo audit` output, update dependencies, run `cargo update`,
+              then `cargo fmt && cargo clippy && cargo test` before merging.
+
+            > This workflow opens a report PR only; it does not auto-edit `Cargo.toml` to avoid
+            > introducing breaking changes.
+          labels: |
+            dependencies
+            security
+          base: ${{ github.ref_name }}

@@ -15,8 +15,8 @@ pub struct FaqRule {
     #[serde(default = "default_match")]
     pub r#match: String, // 匹配方式，默认 "contains"
     pub patterns: Vec<String>, // 触发词
-    pub reply: String,   // 回答
-    #[serde(default)]    // 可选：命中后可随回答一并返回前端的来源链接（邮箱/官网等）
+    pub reply: String,         // 回答
+    #[serde(default)] // 可选：命中后可随回答一并返回前端的来源链接（邮箱/官网等）
     pub url: Option<String>,
 }
 

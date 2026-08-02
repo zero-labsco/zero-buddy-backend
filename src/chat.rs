@@ -35,8 +35,27 @@ pub async fn handle_chat(
     client: &LlmClient,
     cache: &AnswerCache,
     online: Arc<AtomicBool>,
+    limiter: &crate::ratelimit::RateLimiter,
+    client_ip: &str,
     req: ChatRequest,
 ) -> Result<serde_json::Value> {
+    // 0) 速率限制（防滥用 / 控成本）：按客户端 IP 计数，超限直接拒绝。
+    if !limiter.check_and_record(client_ip, cfg.rate_limit_per_min, cfg.rate_limit_per_day) {
+        let probe = req
+            .messages
+            .last()
+            .map(|m| m.content.as_str())
+            .unwrap_or("");
+        let cjk = is_cjk(probe);
+        let reply = if cjk {
+            &cfg.rate_limit_reply_zh
+        } else {
+            &cfg.rate_limit_reply_en
+        };
+        tracing::warn!("rate limit exceeded for {}", client_ip);
+        return Ok(json!({ "reply": reply, "source": "rate-limit" }));
+    }
+
     // 输入校验
     if req.messages.is_empty() {
         anyhow::bail!("messages must not be empty");
@@ -50,13 +69,27 @@ pub async fn handle_chat(
         }
     }
 
-    let query = req
-        .messages
-        .last()
-        .map(|m| m.content.trim())
-        .unwrap_or("");
+    let query = req.messages.last().map(|m| m.content.trim()).unwrap_or("");
     if query.is_empty() {
         anyhow::bail!("last message content is empty");
+    }
+
+    // 0) 话题范围硬拦截（Scope Guard / hard 模式）：
+    // 启用且为 hard 模式时，先用关键词白名单判断；超范围直接返回拒绝语，
+    // 完全不调用 LLM，也不走 FAQ/缓存/RAG，最大程度省 token、防滥用。
+    // prompt 模式不在此拦截，交由 LLM 在 system prompt 中自觉遵守。
+    if cfg.scope_guard_enabled
+        && cfg.scope_guard_mode == crate::config::ScopeMode::Hard
+        && !cfg.in_scope(query)
+    {
+        let cjk = is_cjk(query);
+        let reply = if cjk {
+            &cfg.scope_refuse_reply_zh
+        } else {
+            &cfg.scope_refuse_reply_en
+        };
+        tracing::info!("scope guard (hard): rejected off-topic query");
+        return Ok(json!({ "reply": reply, "source": "scope-guard" }));
     }
 
     // 1) FAQ 优先（高频固定问答，零 token 成本）
@@ -133,11 +166,21 @@ pub async fn handle_chat(
 
     // 在线模式：调 LLM 生成答案
     let reply = if ctx.is_empty() {
+        let scope_policy = if cfg.scope_guard_enabled {
+            format!(
+                " Scope policy: ONLY answer questions about the {} / {} project. \
+                 For anything outside this scope, politely say you can only help with {} topics \
+                 and suggest contacting support.",
+                cfg.product_name, cfg.org_name, cfg.product_name
+            )
+        } else {
+            String::new()
+        };
         let sys = format!(
             "You are {}, assistant for the {} project. \
              Reply in the same language the user wrote in: if they write Chinese, answer in Chinese; \
-             if they write English, answer in English; for any other language, reply in English.",
-            cfg.product_name, cfg.org_name
+             if they write English, answer in English; for any other language, reply in English.{}",
+            cfg.product_name, cfg.org_name, scope_policy
         );
         client
             .chat(&[
@@ -158,7 +201,10 @@ pub async fn handle_chat(
         Ok(r) => r,
         Err(e) => {
             if is_auth_or_quota_error(&e) {
-                tracing::warn!("LLM auth/quota error at runtime -> degrading to OFFLINE: {:#}", e);
+                tracing::warn!(
+                    "LLM auth/quota error at runtime -> degrading to OFFLINE: {:#}",
+                    e
+                );
                 online.store(false, Ordering::Relaxed);
                 let cjk = is_cjk(query);
                 if ctx.is_empty() {

@@ -90,7 +90,11 @@ impl AnswerCache {
                     continue;
                 }
                 let s = cosine(&q_emb, &e.embedding);
-                let th = if threshold <= 0.0 { DEFAULT_SIMILARITY_THRESHOLD } else { threshold };
+                let th = if threshold <= 0.0 {
+                    DEFAULT_SIMILARITY_THRESHOLD
+                } else {
+                    threshold
+                };
                 if s >= th {
                     best = match best {
                         Some((bs, _)) if bs >= s => best,
@@ -159,7 +163,10 @@ impl AnswerCache {
 
 // 归一化：小写并折叠空白，作为精确命中 key。
 fn normalize(q: &str) -> String {
-    q.to_lowercase().split_whitespace().collect::<Vec<_>>().join(" ")
+    q.to_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[derive(Serialize, Deserialize)]

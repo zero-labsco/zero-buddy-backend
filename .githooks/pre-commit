@@ -1,0 +1,18 @@
+#!/bin/sh
+# 后端提交前钩子：保证代码格式符合 rustfmt，避免 CI 中 cargo fmt --check 失败。
+# 启用方式（克隆仓库后执行一次）：git config core.hooksPath .githooks
+set -e
+
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "⚠️  未找到 cargo，跳过格式检查（请确保本地已安装 Rust 工具链）"
+  exit 0
+fi
+
+if ! cargo fmt --all -- --check; then
+  echo "❌ cargo fmt 格式检查未通过。请先运行："
+  echo "      cargo fmt --all"
+  echo "   格式化后再提交。"
+  exit 1
+fi
+
+echo "✅ cargo fmt 检查通过。"

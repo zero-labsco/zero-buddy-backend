@@ -1,7 +1,11 @@
 # Zero Buddy — Backend
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 > The AI assistant backend for Zero Labs, answering questions about the Zero
 > Inspector Kit, Flutter Agent Kit, WizardPlayer, and Invoice Zero.
+
+> **License:** [Apache-2.0](LICENSE) © 2026 Zero Labs.
 
 ---
 
@@ -48,6 +52,16 @@ without changing call signatures.
   (exact-match, no embedding needed). When nothing matches, the reply gracefully
   asks the user to **"please ask in Chinese or English"** (in EN or ZH). The
   frontend does **not** surface an ONLINE/OFFLINE label — only a status dot.
+- **Scope Guard (topic restriction)** — rejects questions unrelated to Zero Labs
+  products to avoid wasting LLM tokens and misuse as a general AI. Configurable
+  via `SCOPE_GUARD_ENABLED`, `SCOPE_GUARD_MODE` (`prompt` | `hard`),
+  `SCOPE_ALLOW_KEYWORDS` (substring whitelist), `SCOPE_ALLOW_PATTERNS` (regex
+  whitelist, e.g. product names, `zerolabsco.com`, GitHub repo), and
+  `SCOPE_REFUSE_REPLY_ZH` / `SCOPE_REFUSE_REPLY_EN`. See [Configuration](#configuration).
+- **Rate limiting (abuse / cost control)** — per-client-IP limits on requests
+  per minute and per day (`RATE_LIMIT_PER_MIN`, `RATE_LIMIT_PER_DAY`), with
+  configurable ZH/EN messages. In-memory, single-instance; use Redis for
+  multi-instance. Exceeded requests return a `rate-limit` source reply.
 - **OpenAI-compatible** — point `LLM_BASE_URL` at any compatible provider.
 - **Hardening** — reused `reqwest::Client`, body size limit (1 MB), global
   timeout, CORS restricted to the frontend origin, and structured logging
@@ -147,6 +161,16 @@ Every response (success or error) uses the same envelope:
 | `CACHE_SIMILARITY`  | `0.92`                        | Semantic cache neighbor threshold    |
 | `MAX_MESSAGE_CHARS` | `4000`                        | Max chars per single message         |
 | `MAX_MESSAGES`      | `50`                          | Max messages per request             |
+| `SCOPE_GUARD_ENABLED` | `true`                      | Enable topic-scope restriction (Scope Guard) |
+| `SCOPE_GUARD_MODE`  | `prompt`                      | `prompt` = LLM self-enforces scope; `hard` = backend blocks off-topic before any LLM call (saves tokens) |
+| `SCOPE_ALLOW_KEYWORDS` | _(see `.env.example`)_ | Comma-separated substring whitelist; a hit passes the query through. Empty = allow all |
+| `SCOPE_ALLOW_PATTERNS` | _(see `.env.example`)_ | `\|`-separated regex whitelist (product names, `zerolabsco.com`, GitHub repo…). Empty = none |
+| `SCOPE_REFUSE_REPLY_ZH` | _(built-in ZH refusal)_ | Reply returned when a Chinese off-topic query is blocked |
+| `SCOPE_REFUSE_REPLY_EN` | _(built-in EN refusal)_ | Reply returned when an English off-topic query is blocked |
+| `RATE_LIMIT_PER_MIN` | `10` | Max requests per client IP per minute (0 = unlimited) |
+| `RATE_LIMIT_PER_DAY` | `500` | Max requests per client IP per day (0 = unlimited) |
+| `RATE_LIMIT_REPLY_ZH` | _(built-in ZH message)_ | Reply returned when a Chinese client is rate-limited |
+| `RATE_LIMIT_REPLY_EN` | _(built-in EN message)_ | Reply returned when an English client is rate-limited |
 
 > Without a valid key the service still starts and the chat returns retrieved
 > knowledge in **offline mode** — useful for demos and testing the RAG pipeline.
@@ -158,6 +182,49 @@ Every response (success or error) uses the same envelope:
 - `Cargo.lock` is committed for reproducible builds (recommended for binaries).
 - Logs are emitted via `tracing`. By default they go to **both the console and
   `backend/logs/app.YYYY-MM-DD.log`** (daily rotation, under the backend crate root). Set `RUST_LOG=debug` for verbose output.
+
+---
+
+## Contributing & CI
+
+This repo follows the [Zero Labs contributing guidelines](https://github.com/zero-labsco/.github/blob/main/profile/CONTRIBUTING.md):
+
+- **Commit messages** must follow [Conventional Commits](https://www.conventionalcommits.org)
+  (e.g. `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `ci:` …).
+  PR commits are enforced by `wagoid/commitlint-github-action` (see `commitlint.config.js`).
+- **Branch naming**: use a descriptive prefix, e.g. `feature/your-feature-name`.
+- **Code style**: Rust uses `rustfmt` (Rust Style Guide). Run `cargo fmt` before pushing.
+- **Pre-commit hook**: this repo ships a `cargo fmt` check in `.githooks/pre-commit`.
+  Enable it once after cloning:
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  It rejects commits whose formatting does not pass `cargo fmt --all -- --check`.
+
+### CI workflow (`.github/workflows/ci.yml`)
+
+Runs on every push to `main`/`master` and on every PR:
+
+1. `cargo fmt --all -- --check` — formatting check.
+2. `cargo clippy --all-targets --all-features -- -D warnings` — lint, warnings treated as errors.
+3. `cargo build --verbose` — compiles the service.
+4. `cargo test --verbose` — runs unit tests.
+5. **Commit Message Lint** (PR only) — validates each commit against Conventional Commits.
+
+### Dependabot (`.github/dependabot.yml`)
+
+- `cargo`: weekly dependency updates, `chore:` commit prefix.
+- `github-actions`: weekly workflow updates, `ci:` commit prefix.
+
+### Dependency Audit & Auto-Fix (`.github/workflows/audit.yml`)
+
+- Runs **every Monday 09:30 UTC** and is also manually triggerable (`workflow_dispatch`).
+- Runs `cargo audit --deny warnings`. If RUSTSEC vulnerabilities are found, it opens a PR
+  titled `chore(deps): address cargo audit vulnerabilities` for human review.
+- The PR is **never auto-merged** and does not auto-edit `Cargo.toml` — a maintainer must
+  bump the affected crate versions and run `cargo update` before merging.
 
 ---
 

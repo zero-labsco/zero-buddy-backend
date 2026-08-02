@@ -14,7 +14,11 @@ pub async fn retrieve_scored(
     let q_embed = client.embed(query).await.ok();
     let mut scored: Vec<(usize, f32)> = Vec::new();
     for (i, d) in docs.iter().enumerate() {
-        let emb: Option<&Vec<f32>> = if d.embedding.is_empty() { None } else { Some(&d.embedding) };
+        let emb: Option<&Vec<f32>> = if d.embedding.is_empty() {
+            None
+        } else {
+            Some(&d.embedding)
+        };
         let score = match (&q_embed, emb) {
             (Some(q), Some(e)) => cosine(q, e),
             _ => 0.0,
