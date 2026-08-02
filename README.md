@@ -1,13 +1,41 @@
-# Zero Buddy — Backend
+<p align="center">
+  <img src="https://img.shields.io/badge/Zero%20Buddy-Backend-5eead4?style=for-the-badge" alt="Zero Buddy Backend" />
+  <img src="https://img.shields.io/badge/Rust-1.97-000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+  <img src="https://img.shields.io/badge/Axum-Web%20Framework-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Axum" />
+  <img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=for-the-badge" alt="License" />
+</p>
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+<h1 align="center">Zero Buddy Backend</h1>
 
-> The AI assistant backend for Zero Labs, answering questions about the Zero
-> Inspector Kit, Flutter Agent Kit, WizardPlayer, and Invoice Zero.
+<p align="center">
+  The AI assistant backend for Zero Labs — answering questions about the Zero
+  Inspector Kit, Flutter Agent Kit, WizardPlayer, and Invoice Zero.
+</p>
 
-> **License:** [Apache-2.0](LICENSE) © 2026 Zero Labs.
+<p align="center">
+  <a href="https://github.com/zero-labsco/zero-buddy-backend">Backend Repo</a>
+  ·
+  <a href="https://github.com/zero-labsco/zero-buddy-frontend">Frontend Repo</a>
+  ·
+  <a href="./CONTRIBUTING.md">Contributing</a>
+</p>
 
 ---
+
+> **Part of the Zero Buddy project.** This repository is the **backend** (Rust /
+> Axum API). The chat UI lives in a separate repo:
+> [**Zero Buddy Frontend »**](https://github.com/zero-labsco/zero-buddy-frontend)
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Response Format](#response-format)
+- [Configuration](#configuration)
+- [Contributing & CI](#contributing--ci)
 
 ## Introduction
 
@@ -68,18 +96,18 @@ without changing call signatures.
   (`tracing` to both console and rotated `logs/` files).
 - **Health check** (`GET /health`).
 
-## Tech stack
+## Tech Stack
 
-| Concern      | Choice                                |
-| ------------ | ------------------------------------- |
-| Web framework| `axum`                                |
-| HTTP client  | `reqwest` (shared client, timeouts)   |
-| Serialization| `serde` / `serde_json`                |
-| Embeddings   | Remote embedding API                  |
-| Config       | Environment variables (`.env`)        |
-| Logging      | `tracing` / `tracing-subscriber`      |
+| Concern       | Choice                              |
+| ------------- | ----------------------------------- |
+| Web framework | `axum`                              |
+| HTTP client   | `reqwest` (shared client, timeouts) |
+| Serialization | `serde` / `serde_json`              |
+| Embeddings    | Remote embedding API                |
+| Config        | Environment variables (`.env`)      |
+| Logging       | `tracing` / `tracing-subscriber`    |
 
-## Project structure
+## Project Structure
 
 ```
 backend/
@@ -91,17 +119,17 @@ backend/
 │   └── answers_cache.json    # Auto-generated answer cache (gitignored)
 └── src/
     ├── main.rs               # Server bootstrap, routing, middleware
-    ├── config.rs             # Env config + has_valid_key()
-    ├── models.rs             # Request / response / document types
-    ├── llm.rs                # OpenAI-compatible chat & embeddings (shared client)
-    ├── knowledge.rs          # Knowledge loading + retrieve
-    ├── rag.rs                # Vector search (cosine) + keyword fallback
-    ├── cache.rs              # Answer cache (exact + semantic)
-    ├── faq.rs                # FAQ matching
-    └── chat.rs               # Orchestrates FAQ → cache → RAG → LLM
+    ├── config/               # Env config + has_valid_key()
+    ├── models/               # Request / response / document types
+    ├── llm/                  # OpenAI-compatible chat & embeddings (shared client)
+    ├── retrieval/            # Knowledge load + RAG + cache + faq
+    ├── chat/                 # Orchestrates FAQ → cache → RAG → LLM
+    ├── rate_limit/           # Per-IP rate limiting
+    ├── logging/              # Tracing setup
+    └── response/             # Unified ApiCode / ApiError / ApiResult envelope
 ```
 
-## Quick start
+## Quick Start
 
 ```bash
 # 1. Install Rust (https://rustup.rs) if you haven't
@@ -124,7 +152,7 @@ curl -s -X POST http://127.0.0.1:3030/api/chat \
   -d '{"messages":[{"role":"user","content":"What is Zero Buddy?"}]}'
 ```
 
-## Response format
+## Response Format
 
 Every response (success or error) uses the same envelope:
 
@@ -144,33 +172,33 @@ Every response (success or error) uses the same envelope:
 
 ## Configuration (`.env`)
 
-| Variable            | Default                       | Description                          |
-| ------------------- | ----------------------------- | ------------------------------------ |
-| `BIND_ADDR`         | `127.0.0.1:3030`              | HTTP listen address (falls back to `127.0.0.1:3031` if busy) |
-| `LLM_BASE_URL`      | `https://api.openai.com/v1`   | OpenAI-compatible base URL           |
-| `LLM_API_KEY`       | _(empty = offline mode)_      | API key for the LLM provider         |
-| `LLM_MODEL`         | `gpt-4o-mini`                 | Chat model name                      |
-| `EMBED_MODEL`       | `text-embedding-3-small`      | Embedding model name                 |
-| `CORS_ORIGIN`       | `http://localhost:3040`       | Allowed frontend origin(s), comma-separated |
-| `CACHE_VERSION`     | `v1`                          | Bump to invalidate the whole cache   |
-| `REQUEST_TIMEOUT_SECS` | `30`                      | Per-LLM-call timeout (seconds)       |
-| `PRODUCT_NAME`      | `ZeroBuddy`                   | Assistant/product name (prompts+logs)|
-| `ORG_NAME`          | `Zero Labs`                   | Org name (prompts)                   |
-| `RAG_TOP_K`         | `3`                           | Max docs fed to the LLM              |
-| `RAG_MIN_SCORE`     | `0.2`                         | Min similarity to include a doc      |
-| `CACHE_SIMILARITY`  | `0.92`                        | Semantic cache neighbor threshold    |
-| `MAX_MESSAGE_CHARS` | `4000`                        | Max chars per single message         |
-| `MAX_MESSAGES`      | `50`                          | Max messages per request             |
-| `SCOPE_GUARD_ENABLED` | `true`                      | Enable topic-scope restriction (Scope Guard) |
-| `SCOPE_GUARD_MODE`  | `prompt`                      | `prompt` = LLM self-enforces scope; `hard` = backend blocks off-topic before any LLM call (saves tokens) |
-| `SCOPE_ALLOW_KEYWORDS` | _(see `.env.example`)_ | Comma-separated substring whitelist; a hit passes the query through. Empty = allow all |
-| `SCOPE_ALLOW_PATTERNS` | _(see `.env.example`)_ | `\|`-separated regex whitelist (product names, `zerolabsco.com`, GitHub repo…). Empty = none |
-| `SCOPE_REFUSE_REPLY_ZH` | _(built-in ZH refusal)_ | Reply returned when a Chinese off-topic query is blocked |
-| `SCOPE_REFUSE_REPLY_EN` | _(built-in EN refusal)_ | Reply returned when an English off-topic query is blocked |
-| `RATE_LIMIT_PER_MIN` | `10` | Max requests per client IP per minute (0 = unlimited) |
-| `RATE_LIMIT_PER_DAY` | `500` | Max requests per client IP per day (0 = unlimited) |
-| `RATE_LIMIT_REPLY_ZH` | _(built-in ZH message)_ | Reply returned when a Chinese client is rate-limited |
-| `RATE_LIMIT_REPLY_EN` | _(built-in EN message)_ | Reply returned when an English client is rate-limited |
+| Variable              | Default                       | Description                                                        |
+| --------------------- | ----------------------------- | ------------------------------------------------------------------ |
+| `BIND_ADDR`           | `127.0.0.1:3030`              | HTTP listen address (falls back to `127.0.0.1:3031` if busy)       |
+| `LLM_BASE_URL`        | `https://api.openai.com/v1`   | OpenAI-compatible base URL                                         |
+| `LLM_API_KEY`         | _(empty = offline mode)_      | API key for the LLM provider                                       |
+| `LLM_MODEL`           | `gpt-4o-mini`                 | Chat model name                                                    |
+| `EMBED_MODEL`         | `text-embedding-3-small`      | Embedding model name                                               |
+| `CORS_ORIGIN`         | `http://localhost:3040`       | Allowed frontend origin(s), comma-separated                        |
+| `CACHE_VERSION`       | `v1`                          | Bump to invalidate the whole cache                                 |
+| `REQUEST_TIMEOUT_SECS`| `30`                          | Per-LLM-call timeout (seconds)                                     |
+| `PRODUCT_NAME`        | `ZeroBuddy`                   | Assistant/product name (prompts+logs)                              |
+| `ORG_NAME`            | `Zero Labs`                   | Org name (prompts)                                                 |
+| `RAG_TOP_K`           | `3`                           | Max docs fed to the LLM                                            |
+| `RAG_MIN_SCORE`       | `0.2`                         | Min similarity to include a doc                                    |
+| `CACHE_SIMILARITY`    | `0.92`                        | Semantic cache neighbor threshold                                  |
+| `MAX_MESSAGE_CHARS`   | `4000`                        | Max chars per single message                                       |
+| `MAX_MESSAGES`        | `50`                          | Max messages per request                                           |
+| `SCOPE_GUARD_ENABLED` | `true`                        | Enable topic-scope restriction (Scope Guard)                       |
+| `SCOPE_GUARD_MODE`    | `prompt`                      | `prompt` = LLM self-enforces scope; `hard` = backend blocks off-topic before any LLM call (saves tokens) |
+| `SCOPE_ALLOW_KEYWORDS`| _(see `.env.example`)_        | Comma-separated substring whitelist; a hit passes the query through. Empty = allow all |
+| `SCOPE_ALLOW_PATTERNS`| _(see `.env.example`)_        | `\|`-separated regex whitelist (product names, `zerolabsco.com`, GitHub repo…). Empty = none |
+| `SCOPE_REFUSE_REPLY_ZH`| _(built-in ZH refusal)_      | Reply returned when a Chinese off-topic query is blocked           |
+| `SCOPE_REFUSE_REPLY_EN`| _(built-in EN refusal)_      | Reply returned when an English off-topic query is blocked          |
+| `RATE_LIMIT_PER_MIN`  | `10`                          | Max requests per client IP per minute (0 = unlimited)              |
+| `RATE_LIMIT_PER_DAY`  | `500`                         | Max requests per client IP per day (0 = unlimited)                 |
+| `RATE_LIMIT_REPLY_ZH` | _(built-in ZH message)_       | Reply returned when a Chinese client is rate-limited               |
+| `RATE_LIMIT_REPLY_EN` | _(built-in EN message)_       | Reply returned when an English client is rate-limited              |
 
 > Without a valid key the service still starts and the chat returns retrieved
 > knowledge in **offline mode** — useful for demos and testing the RAG pipeline.
