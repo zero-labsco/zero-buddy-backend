@@ -1,0 +1,166 @@
+# Zero Buddy — Backend
+
+> The AI assistant backend for Zero Labs, answering questions about the Zero
+> Inspector Kit, Flutter Agent Kit, WizardPlayer, and Invoice Zero.
+
+---
+
+## Introduction
+
+A standalone Rust (Axum) service that powers the Zero Buddy chat assistant. It
+uses a curated knowledge base about Zero Labs' projects with a lightweight **RAG
+(retrieval-augmented generation)** pipeline and can call any OpenAI-compatible
+LLM (OpenAI / DeepSeek / Qwen / Claude, …).
+
+The code is organized into clear modules (`config`, `llm`, `knowledge`, `rag`,
+`chat`, `cache`, `faq`) so it can later be split into independent microservices
+without changing call signatures.
+
+## Features
+
+- **Chat API** (`POST /api/chat`) — conversational answers grounded in the
+  Zero Labs knowledge base. Responses carry a `source` field
+  (`faq` / `cache` / `llm` / `offline`) so the frontend knows where an answer
+  came from.
+- **Unified response envelope** — every response is
+  `{ "code": 200, "message": "success", "body": { ... } }`. `code` comes from
+  the `ApiCode` enum; `message` defaults to the enum text but can be overridden
+  per call (e.g. `"too many messages (max 50)"`); `body` holds business data and
+  is `null` on error.
+- **RAG retrieval** — cosine-similarity retrieval over embeddings, with a
+  **keyword fallback** so it still works without an API key.
+- **Reply language policy** — answers follow the user's input language:
+  **Chinese → Chinese, English → English, any other language → English**.
+  - Online: enforced by the LLM system prompt (both simple and RAG paths).
+  - Offline: `faq.json` / `knowledge.json` ship **bilingual (EN + ZH)** entries,
+    so the same question in either language hits the matching entry.
+- **Scope limit** — the assistant only answers questions related to Zero Labs /
+  its products (features, usage, APIs, deployment, knowledge base). Off-topic
+  questions are politely refused to avoid wasting tokens.
+- **Answer cache** — two layers to save LLM tokens:
+  - **Exact hit**: normalized query as key, stored in `data/answers_cache.json`
+    (works **offline too** — see `put_offline` below, persists EN/ZH Q&A).
+  - **Semantic neighbor**: query embedding compared against cached items
+    (cosine ≥ `CACHE_SIMILARITY`, default `0.92`) to cover rephrased questions.
+  - Bumping `CACHE_VERSION` invalidates the whole cache.
+- **Offline mode** — without a valid `LLM_API_KEY`, the API returns retrieved
+  knowledge snippets instead of failing. FAQ + knowledge hits are cached offline
+  (exact-match, no embedding needed). When nothing matches, the reply gracefully
+  asks the user to **"please ask in Chinese or English"** (in EN or ZH). The
+  frontend does **not** surface an ONLINE/OFFLINE label — only a status dot.
+- **OpenAI-compatible** — point `LLM_BASE_URL` at any compatible provider.
+- **Hardening** — reused `reqwest::Client`, body size limit (1 MB), global
+  timeout, CORS restricted to the frontend origin, and structured logging
+  (`tracing` to both console and rotated `logs/` files).
+- **Health check** (`GET /health`).
+
+## Tech stack
+
+| Concern      | Choice                                |
+| ------------ | ------------------------------------- |
+| Web framework| `axum`                                |
+| HTTP client  | `reqwest` (shared client, timeouts)   |
+| Serialization| `serde` / `serde_json`                |
+| Embeddings   | Remote embedding API                  |
+| Config       | Environment variables (`.env`)        |
+| Logging      | `tracing` / `tracing-subscriber`      |
+
+## Project structure
+
+```
+backend/
+├── Cargo.toml
+├── .env.example
+├── data/
+│   ├── knowledge.json        # Curated Zero Labs knowledge base
+│   ├── faq.json              # FAQ rules (zero-token answers)
+│   └── answers_cache.json    # Auto-generated answer cache (gitignored)
+└── src/
+    ├── main.rs               # Server bootstrap, routing, middleware
+    ├── config.rs             # Env config + has_valid_key()
+    ├── models.rs             # Request / response / document types
+    ├── llm.rs                # OpenAI-compatible chat & embeddings (shared client)
+    ├── knowledge.rs          # Knowledge loading + retrieve
+    ├── rag.rs                # Vector search (cosine) + keyword fallback
+    ├── cache.rs              # Answer cache (exact + semantic)
+    ├── faq.rs                # FAQ matching
+    └── chat.rs               # Orchestrates FAQ → cache → RAG → LLM
+```
+
+## Quick start
+
+```bash
+# 1. Install Rust (https://rustup.rs) if you haven't
+
+# 2. Configure environment
+cp .env.example .env
+#    Set LLM_BASE_URL and LLM_API_KEY (any OpenAI-compatible provider).
+#    Leaving LLM_API_KEY empty starts the service in offline mode.
+
+# 3. Run
+cargo run
+#    Server listens on http://127.0.0.1:3030 (falls back to 3031 if busy)
+
+# 4. Health check
+curl http://127.0.0.1:3030/health
+
+# 5. Try a chat (response is wrapped in the uniform envelope below)
+curl -s -X POST http://127.0.0.1:3030/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"What is Zero Buddy?"}]}'
+```
+
+## Response format
+
+Every response (success or error) uses the same envelope:
+
+```json
+{ "code": 200, "message": "success", "body": { "reply": "...", "source": "llm", "url": "https://zerolabsco.com" } }
+```
+
+- `code` — comes from the `ApiCode` enum (`200`, `400`, `401`, `404`, `500`…).
+- `message` — defaults to the enum's text; can be overridden per call, e.g.
+  `{ "code": 400, "message": "too many messages (max 50)", "body": null }`.
+- `body` — the business payload; `null` on error.
+  - `reply` — the answer text.
+  - `source` — how the answer was produced (`faq` / `cache` / `llm` / `offline`).
+  - `url` — optional link carried from the matched knowledge document (e.g. official
+    website or `mailto:` email); `undefined` when no document link applies. The
+    frontend renders it as a clickable link after typing finishes.
+
+## Configuration (`.env`)
+
+| Variable            | Default                       | Description                          |
+| ------------------- | ----------------------------- | ------------------------------------ |
+| `BIND_ADDR`         | `127.0.0.1:3030`              | HTTP listen address (falls back to `127.0.0.1:3031` if busy) |
+| `LLM_BASE_URL`      | `https://api.openai.com/v1`   | OpenAI-compatible base URL           |
+| `LLM_API_KEY`       | _(empty = offline mode)_      | API key for the LLM provider         |
+| `LLM_MODEL`         | `gpt-4o-mini`                 | Chat model name                      |
+| `EMBED_MODEL`       | `text-embedding-3-small`      | Embedding model name                 |
+| `CORS_ORIGIN`       | `http://localhost:3040`       | Allowed frontend origin(s), comma-separated |
+| `CACHE_VERSION`     | `v1`                          | Bump to invalidate the whole cache   |
+| `REQUEST_TIMEOUT_SECS` | `30`                      | Per-LLM-call timeout (seconds)       |
+| `PRODUCT_NAME`      | `ZeroBuddy`                   | Assistant/product name (prompts+logs)|
+| `ORG_NAME`          | `Zero Labs`                   | Org name (prompts)                   |
+| `RAG_TOP_K`         | `3`                           | Max docs fed to the LLM              |
+| `RAG_MIN_SCORE`     | `0.2`                         | Min similarity to include a doc      |
+| `CACHE_SIMILARITY`  | `0.92`                        | Semantic cache neighbor threshold    |
+| `MAX_MESSAGE_CHARS` | `4000`                        | Max chars per single message         |
+| `MAX_MESSAGES`      | `50`                          | Max messages per request             |
+
+> Without a valid key the service still starts and the chat returns retrieved
+> knowledge in **offline mode** — useful for demos and testing the RAG pipeline.
+
+### Notes
+
+- `data/answers_cache.json` is built on the fly as users ask questions; delete it
+  (or bump `CACHE_VERSION`) to rebuild. It is git-ignored.
+- `Cargo.lock` is committed for reproducible builds (recommended for binaries).
+- Logs are emitted via `tracing`. By default they go to **both the console and
+  `backend/logs/app.YYYY-MM-DD.log`** (daily rotation, under the backend crate root). Set `RUST_LOG=debug` for verbose output.
+
+---
+
+### 中文文档
+
+中文说明请见 [`README_ZH.md`](./README_ZH.md)。

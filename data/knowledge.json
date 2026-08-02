@@ -1,0 +1,98 @@
+[
+  {
+    "id": "zero-labs-overview-en",
+    "title": "Zero Labs Overview",
+    "content": "Zero Labs is an open-source developer tools organization building high-quality libraries, templates, and agentic toolkits to help teams ship reliable software faster. Projects are MIT/AGPL licensed and community-driven.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-labs-overview-zh",
+    "title": "Zero Labs 概览",
+    "content": "Zero Labs 是一个开源开发工具组织，提供高质量的库、模板与智能体工具包，帮助团队更快、更可靠地交付软件。项目采用 MIT/AGPL 开源协议，由社区共同驱动。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-labs-contact-en",
+    "title": "Contact Zero Labs",
+    "content": "You can reach Zero Labs by email at contact@zerolabsco.com, or visit their official website https://zerolabsco.com. Open-source project questions are also welcome as GitHub issues at https://github.com/zero-labsco",
+    "url": "mailto:contact@zerolabsco.com"
+  },
+  {
+    "id": "zero-labs-contact-zh",
+    "title": "联系方式",
+    "content": "你可以通过以下方式联系 Zero Labs：发送邮件至 contact@zerolabsco.com，或访问官方网站 https://zerolabsco.com。开源项目相关问题也欢迎在 GitHub 提交 issue：https://github.com/zero-labsco",
+    "url": "mailto:contact@zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-what-en",
+    "title": "What is Zero Buddy",
+    "content": "Zero Buddy is an AI chat assistant by Zero Labs, built with a Rust (Axum) backend and a Next.js frontend. It supports Retrieval-Augmented Generation (RAG), FAQ-first answering, answer caching, and offline knowledge display. It can be embedded into any website as a support or docs assistant.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-what-zh",
+    "title": "什么是 Zero Buddy",
+    "content": "Zero Buddy 是 Zero Labs 旗下的一个 AI 聊天助手项目，基于 Rust 后端与 Next.js 前端构建。它支持检索增强生成（RAG）、FAQ 优先应答、答案缓存与离线知识库展示，可嵌入网站作为客服/文档助手。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-architecture-en",
+    "title": "Zero Buddy Architecture",
+    "content": "The backend uses Rust + Axum and exposes a POST /api/chat endpoint that integrates LLM calls, knowledge-base retrieval (RAG), FAQ, and answer caching. The frontend is a Next.js + TypeScript chat widget embeddable in any page. Configuration is injected via environment variables: LLM_API_KEY, BIND_ADDR, CORS_ORIGIN, NEXT_PUBLIC_API_URL.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-architecture-zh",
+    "title": "Zero Buddy 技术架构",
+    "content": "后端采用 Rust + Axum 框架，提供 /api/chat 接口，集成 LLM 调用、知识库检索（RAG）、FAQ 与答案缓存；前端为 Next.js + TypeScript 聊天组件，可一键嵌入任意页面。配置通过环境变量（如 LLM_API_KEY、BIND_ADDR、CORS_ORIGIN、NEXT_PUBLIC_API_URL）注入。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-offline-en",
+    "title": "Zero Buddy Offline Mode",
+    "content": "When LLM_API_KEY is not set, Zero Buddy automatically enters OFFLINE mode: it stops calling the LLM and skips embedding-based cache writes, returning FAQ answers and raw knowledge-base snippets directly. This keeps basic Q&A and contact info working even without AI quota.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-offline-zh",
+    "title": "离线模式说明",
+    "content": "当未配置 LLM_API_KEY 时，Zero Buddy 自动进入离线模式：不再调用 LLM，也跳过缓存写入中的向量计算，而是直接返回 FAQ 与知识库检索到的原文片段。这保证在没有 AI 额度的情况下，基础问答与联系方式仍能正常服务。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-deployment-en",
+    "title": "Zero Buddy Deployment",
+    "content": "The backend listens on 127.0.0.1:3030 by default. For production, put it behind Nginx/Caddy reverse proxy on 80/443 with HTTPS. Set BIND_ADDR to 0.0.0.0 to expose directly (configure firewall) or keep 127.0.0.1 and let the proxy forward. Set CORS_ORIGIN to your frontend domain to allow cross-origin requests.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-deployment-zh",
+    "title": "部署指南",
+    "content": "后端默认监听 127.0.0.1:3030，生产环境建议配合 Nginx/Caddy 反向代理到 80/443 端口并提供 HTTPS。环境变量 BIND_ADDR 可设为 0.0.0.0 直接暴露（需自行做好防火墙），或保留 127.0.0.1 由反代转发。CORS_ORIGIN 需设置为前端域名以允许跨域。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-api-en",
+    "title": "Zero Buddy API",
+    "content": "Main endpoint: POST /api/chat. Request body: {\"query\": \"your question\"}. Response envelope: {\"code\":0,\"message\":\"ok\",\"body\":{\"reply\":\"answer text\",\"source\":\"faq|cache|offline|llm\",\"url\":\"optional link\"}}. The source field indicates where the answer came from.",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-buddy-api-zh",
+    "title": "API 接口",
+    "content": "主要接口为 POST /api/chat，请求体为 JSON：{\"query\": \"你的问题\"}。响应为统一信封：{\"code\":0,\"message\":\"ok\",\"body\":{\"reply\":\"回答内容\",\"source\":\"faq|cache|offline|llm\",\"url\":\"可选的链接\"}}。source 字段标明答案来源。",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "zero-labs-github-en",
+    "title": "Zero Labs GitHub",
+    "content": "Zero Labs source code is hosted on GitHub: https://github.com/zero-labsco. Stars, issues, and pull requests are welcome.",
+    "url": "https://github.com/zero-labsco"
+  },
+  {
+    "id": "zero-labs-github-zh",
+    "title": "GitHub 开源仓库",
+    "content": "Zero Labs 的源码托管在 GitHub：https://github.com/zero-labsco。欢迎 Star、提交 Issue 与 Pull Request，参与开源共建。",
+    "url": "https://github.com/zero-labsco"
+  }
+]

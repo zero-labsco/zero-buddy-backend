@@ -1,0 +1,296 @@
+[
+  {
+    "id": "greeting-en",
+    "match": "contains",
+    "patterns": [
+      "hello",
+      "hi",
+      "hey",
+      "yo",
+      "sup",
+      "heya",
+      "hiya",
+      "good morning",
+      "good afternoon",
+      "good evening"
+    ],
+    "reply": "Hey! I'm Zero Buddy, the AI assistant for Zero Labs. Ask me anything about our open-source developer tools and apps."
+  },
+  {
+    "id": "greeting-zh",
+    "match": "contains",
+    "patterns": [
+      "你好",
+      "您好",
+      "在吗",
+      "嗨",
+      "哈喽",
+      "早上好",
+      "下午好",
+      "晚上好"
+    ],
+    "reply": "你好！我是 Zero Labs 的智能助手，有什么可以帮你的吗？"
+  },
+  {
+    "id": "thanks-en",
+    "match": "contains",
+    "patterns": [
+      "thank",
+      "thx",
+      "thanks",
+      "ty",
+      "cheers",
+      "appreciate"
+    ],
+    "reply": "You're welcome! Happy to help anytime."
+  },
+  {
+    "id": "thanks-zh",
+    "match": "contains",
+    "patterns": [
+      "谢谢",
+      "感谢",
+      "多谢",
+      "谢了",
+      "太感谢"
+    ],
+    "reply": "不客气！如果还有其他问题，随时找我。"
+  },
+  {
+    "id": "identity-en",
+    "match": "contains",
+    "patterns": [
+      "who are you",
+      "what are you",
+      "your name",
+      "introduce yourself",
+      "tell me about yourself",
+      "what is zero buddy"
+    ],
+    "reply": "I'm Zero Buddy, the official AI assistant for Zero Labs (https://zerolabsco.com). I help you learn about their open-source developer tools and apps. Ask me anything about them!"
+  },
+  {
+    "id": "identity-zh",
+    "match": "contains",
+    "patterns": [
+      "你是谁",
+      "你是什么",
+      "你叫什么",
+      "介绍一下你自己",
+      "zero buddy 是什么",
+      "zero buddy 是什么"
+    ],
+    "reply": "我是 Zero Buddy，Zero Labs（https://zerolabsco.com）的官方智能助手，帮你了解他们的开源开发者工具与应用。有任何问题都可以问我！"
+  },
+  {
+    "id": "products-en",
+    "match": "contains",
+    "patterns": [
+      "products",
+      "what do you make",
+      "what does zero",
+      "what is zero labs",
+      "which product",
+      "what are your"
+    ],
+    "reply": "Zero Labs builds open-source developer tools and apps. Their main projects are:\n• Zero Inspector Kit — in-app Flutter debugger (network, logs, DB, memory, FPS)\n• Flutter Agent Kit — cross-tool AI dev toolkit (AGENTS.md + scripts)\n• WizardPlayer — cross-platform video & torrent player\n• Invoice Zero — invoicing app for freelancers\nLearn more at https://zerolabsco.com or github.com/zero-labsco."
+  },
+  {
+    "id": "products-zh",
+    "match": "contains",
+    "patterns": [
+      "产品",
+      "你们做什么",
+      "有哪些项目",
+      "zero labs 是什么公司",
+      "有哪些产品",
+      "介绍一下 zero labs"
+    ],
+    "reply": "Zero Labs 专注于开源开发者工具与应用，主要项目包括：\n• Zero Inspector Kit —— Flutter 应用内调试器（网络、日志、数据库、内存、帧率）\n• Flutter Agent Kit —— 跨工具 AI 开发工具包（AGENTS.md + 脚本）\n• WizardPlayer —— 跨平台视频与种子播放器\n• Invoice Zero —— 面向自由职业者的发票应用\n了解更多：https://zerolabsco.com 或 github.com/zero-labsco。"
+  },
+  {
+    "id": "contact-en",
+    "match": "contains",
+    "patterns": [
+      "contact",
+      "email",
+      "e-mail",
+      "get in touch",
+      "reach you",
+      "reach out",
+      "contact us",
+      "customer support",
+      "technical support",
+      "help desk"
+    ],
+    "reply": "You can reach Zero Labs by email at contact@zerolabsco.com, or visit their official website at https://zerolabsco.com. Open-source project questions are also welcome as GitHub issues: https://github.com/zero-labsco",
+    "url": "mailto:contact@zerolabsco.com"
+  },
+  {
+    "id": "contact-zh",
+    "match": "contains",
+    "patterns": [
+      "联系",
+      "邮箱",
+      "电子邮件",
+      "客服",
+      "技术支持",
+      "怎么联系",
+      "如何联系",
+      "找你们"
+    ],
+    "reply": "你可以通过以下方式联系 Zero Labs：发送邮件至 contact@zerolabsco.com，或访问官方网站 https://zerolabsco.com。开源项目相关问题也欢迎在 GitHub 提交 issue：https://github.com/zero-labsco",
+    "url": "mailto:contact@zerolabsco.com"
+  },
+  {
+    "id": "github-en",
+    "match": "contains",
+    "patterns": [
+      "github",
+      "repo",
+      "repository",
+      "source code",
+      "source"
+    ],
+    "reply": "All Zero Labs projects are open source on GitHub: https://github.com/zero-labsco",
+    "url": "https://github.com/zero-labsco"
+  },
+  {
+    "id": "github-zh",
+    "match": "contains",
+    "patterns": [
+      "github",
+      "源代码",
+      "开源",
+      "代码仓库",
+      "源码"
+    ],
+    "reply": "Zero Labs 的源码托管在 GitHub：https://github.com/zero-labsco，欢迎 Star、提交 Issue 或参与贡献！",
+    "url": "https://github.com/zero-labsco"
+  },
+  {
+    "id": "website-en",
+    "match": "contains",
+    "patterns": [
+      "website",
+      "site",
+      "where can i find",
+      "homepage"
+    ],
+    "reply": "Zero Labs: https://zerolabsco.com  •  GitHub: https://github.com/zero-labsco",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "website-zh",
+    "match": "contains",
+    "patterns": [
+      "官网",
+      "网站",
+      "主页",
+      "去哪里找"
+    ],
+    "reply": "Zero Labs 官方网站：https://zerolabsco.com",
+    "url": "https://zerolabsco.com"
+  },
+  {
+    "id": "install-en",
+    "match": "contains",
+    "patterns": [
+      "install",
+      "how to use",
+      "how do i",
+      "setup",
+      "set up"
+    ],
+    "reply": "Which project do you want to install? Zero Inspector Kit (pub.dev), Flutter Agent Kit (install.dart/install.py), WizardPlayer (GitHub releases), or Invoice Zero (invoicezero.net)?"
+  },
+  {
+    "id": "install-zh",
+    "match": "contains",
+    "patterns": [
+      "安装",
+      "怎么用",
+      "怎么安装",
+      "如何安装",
+      "怎么使用",
+      "搭建",
+      "配置"
+    ],
+    "reply": "你想安装哪个项目？Zero Inspector Kit（pub.dev）、Flutter Agent Kit（install.dart/install.py）、WizardPlayer（GitHub Releases），还是 Invoice Zero（invoicezero.net）？"
+  },
+  {
+    "id": "license-en",
+    "match": "contains",
+    "patterns": [
+      "license",
+      "licence",
+      "open source",
+      "opensource",
+      "gpl",
+      "mit",
+      "agpl"
+    ],
+    "reply": "Licenses across Zero Labs projects:\n• Zero Inspector Kit — GPL-3.0\n• Flutter Agent Kit — MIT\n• WizardPlayer — AGPL-3.0\n• Invoice Zero — part of the Zero Labs family (see its repo for details)"
+  },
+  {
+    "id": "license-zh",
+    "match": "contains",
+    "patterns": [
+      "协议",
+      "许可证",
+      "开源协议",
+      "授权",
+      "gpl",
+      "mit",
+      "agpl"
+    ],
+    "reply": "Zero Labs 各项目的开源协议：\n• Zero Inspector Kit —— GPL-3.0\n• Flutter Agent Kit —— MIT\n• WizardPlayer —— AGPL-3.0\n• Invoice Zero —— 属于 Zero Labs 家族（详见其仓库说明）"
+  },
+  {
+    "id": "help-en",
+    "match": "contains",
+    "patterns": [
+      "help",
+      "what can you do",
+      "how can you help",
+      "capabilities",
+      "what do you do"
+    ],
+    "reply": "I can answer questions about Zero Labs and their projects. Try:\n• \"What is Zero Inspector Kit?\"\n• \"List your products\"\n• \"Where's your GitHub?\"\n• \"How do I install Flutter Agent Kit?\"\n• \"What license is WizardPlayer?\""
+  },
+  {
+    "id": "help-zh",
+    "match": "contains",
+    "patterns": [
+      "你能做什么",
+      "怎么帮你",
+      "有什么功能",
+      "你能帮什么",
+      "能干什么"
+    ],
+    "reply": "我可以回答关于 Zero Labs 及其项目的问题。你可以试试问我：\n• 「Zero Inspector Kit 是什么？」\n• 「你们有哪些产品？」\n• 「GitHub 地址在哪？」\n• 「怎么安装 Flutter Agent Kit？」\n• 「WizardPlayer 是什么协议？」"
+  },
+  {
+    "id": "bye-en",
+    "match": "contains",
+    "patterns": [
+      "bye",
+      "goodbye",
+      "see you",
+      "cya",
+      "see ya"
+    ],
+    "reply": "Bye! Come back anytime you want to know more about Zero Labs."
+  },
+  {
+    "id": "bye-zh",
+    "match": "contains",
+    "patterns": [
+      "再见",
+      "拜拜",
+      "回头见",
+      "下次聊"
+    ],
+    "reply": "再见！随时欢迎回来了解更多关于 Zero Labs 的内容。"
+  }
+]

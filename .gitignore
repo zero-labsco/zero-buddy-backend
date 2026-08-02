@@ -1,0 +1,28 @@
+# Compiled output
+/target
+
+# Build artifacts
+*.o
+*.d
+*.rlib
+*.rmeta
+
+# Dependencies lockfile — kept for reproducible builds (binary project)
+# Cargo.lock  intentionally NOT ignored.
+
+# Local config & secrets
+.env
+.env.local
+
+# Generated answer cache (auto-built at runtime)
+/data/answers_cache.json
+
+# Runtime logs (auto-built at runtime)
+/logs
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+backend.out.log
+backend.err.log
