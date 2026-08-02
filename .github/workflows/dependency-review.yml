@@ -1,0 +1,30 @@
+name: Dependency Review
+
+# 安全门禁：在 PR 合并前检查依赖变更是否引入高危/严重漏洞（含 RUSTSEC advisories）。
+# 覆盖所有来源（含 Dependabot 自动拉取的“最新版”PR）—— 任何带高危/严重漏洞的更新
+# 都会被此门禁挡下，确保“先安全、再最新版”，不安全的版本无法合入。
+
+on:
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Block vulnerable dependency changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # 仅拦截高危/严重；中低危不阻断（由 cargo audit 周任务跟进）
+          fail-on-severity: high
+          fail-on-scopes: 'runtime,development'
+          comment-summary-in-pr: true
+          warn-on-openssf-scorecard-severity: 'high'

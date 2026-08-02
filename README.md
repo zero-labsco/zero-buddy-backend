@@ -187,7 +187,8 @@ Every response (success or error) uses the same envelope:
 
 ## Contributing & CI
 
-This repo follows the [Zero Labs contributing guidelines](https://github.com/zero-labsco/.github/blob/main/profile/CONTRIBUTING.md):
+Full contribution guidelines (English + 简体中文) are in **[CONTRIBUTING.md](./CONTRIBUTING.md)**,
+following the [Zero Labs contributing guidelines](https://github.com/zero-labsco/.github/blob/main/profile/CONTRIBUTING.md):
 
 - **Commit messages** must follow [Conventional Commits](https://www.conventionalcommits.org)
   (e.g. `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `ci:` …).
@@ -217,14 +218,22 @@ Runs on every push to `main`/`master` and on every PR:
 
 - `cargo`: weekly dependency updates, `chore:` commit prefix.
 - `github-actions`: weekly workflow updates, `ci:` commit prefix.
+- **Security-first**: all updates must pass the audit / dependency-review gates below before merge; Dependabot never auto-merges.
 
 ### Dependency Audit & Auto-Fix (`.github/workflows/audit.yml`)
 
 - Runs **every Monday 09:30 UTC** and is also manually triggerable (`workflow_dispatch`).
-- Runs `cargo audit --deny warnings`. If RUSTSEC vulnerabilities are found, it opens a PR
-  titled `chore(deps): address cargo audit vulnerabilities` for human review.
+- **Security is a hard gate**: runs `cargo audit --deny warnings`. If RUSTSEC vulnerabilities are found,
+  the job **fails (red)** on purpose (status red) until the tree is clean — an unsafe version is never
+  accepted "just because it's latest" — and opens a report PR titled
+  `chore(deps): address cargo audit vulnerabilities` for human review.
 - The PR is **never auto-merged** and does not auto-edit `Cargo.toml` — a maintainer must
   bump the affected crate versions and run `cargo update` before merging.
+
+### Dependency Review Gate (`.github/workflows/dependency-review.yml`)
+
+- Runs on **every PR to `main`**. Blocks any change that introduces high/critical vulnerabilities
+  (covers Dependabot's "latest version" PRs too). Ensures **secure-first, then latest**.
 
 ---
 

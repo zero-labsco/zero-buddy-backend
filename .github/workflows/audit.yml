@@ -1,15 +1,19 @@
 name: Dependency Audit & Auto-Fix
 
-# 自动检查 Rust 后端依赖的安全漏洞（RUSTSEC advisories）：
-# 每周一 09:30 UTC 自动跑 cargo audit；若发现漏洞，开一个 PR（标题符合
-# Conventional Commits，不会自动合并，需人工 review）。
-# 注：cargo-audit 修复通常需要升级 Cargo 依赖版本，这里仅负责“发现并提 PR”，
-# 具体升级在 PR 内由维护者执行（避免破坏性自动改 Cargo.toml）。
+# 安全优先策略（Security-first）：
+# 1) 任何版本（含 Dependabot 拉取的最新版）都必须通过安全审计才能合入 —— 安全是硬门槛，
+#    不允许“有高危/严重漏洞的版本”停留在仓库中。
+# 2) 每周自动跑 cargo audit；发现漏洞时开一个报告 PR（标题符合 Conventional Commits，
+#    不会自动合并，需人工 review 并升级 Cargo 依赖）。
+# 3) 若检测到漏洞，本工作流以非零状态失败（status 红），明确提示“此版本不安全”，
+#    绝不以“最新版”为由放行。漏洞清零后下次运行即通过。
+# 4) PR 合并前另有 dependency-review 门禁（.github/workflows/dependency-review.yml）
+#    拦截任何引入高危/严重漏洞的 PR（含 Dependabot 的最新版 PR）。
 # 也可在 Actions 页面手动触发。
 
 on:
   schedule:
-    - cron: "30 9 * * 1" # 每周一 09:30 UTC
+    - cron: '30 9 * * 1' # 每周一 09:30 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -22,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -30,7 +34,7 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
 
-      - name: Run cargo audit
+      - name: Run cargo audit (security gate)
         id: audit
         continue-on-error: true
         run: |
@@ -44,27 +48,35 @@ jobs:
         if: steps.audit.outputs.has_vulns == 'false'
         run: echo "✅ No RUSTSEC vulnerabilities found. Nothing to do."
 
+      # 安全是硬门槛：发现漏洞则工作流失败（status 红），提示人工升级依赖。
+      - name: Fail on vulnerabilities (security gate)
+        if: steps.audit.outputs.has_vulns == 'true'
+        run: |
+          echo "🔒 Security gate: repository must have no high/critical (RUSTSEC) vulnerabilities."
+          echo "Please review the audit report and bump affected crates in Cargo.toml."
+          exit 1
+
       - name: Create Pull Request (audit report)
         if: steps.audit.outputs.has_vulns == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(deps): address cargo audit vulnerabilities"
+          commit-message: 'chore(deps): address cargo audit vulnerabilities'
           branch: chore/auto-fix-cargo-audit
           delete-branch: true
-          title: "chore(deps): address cargo audit vulnerabilities"
+          title: 'chore(deps): address cargo audit vulnerabilities'
           body: |
             ## Automated Rust dependency security report
 
             This PR was created automatically by the **Dependency Audit & Auto-Fix** workflow
             after `cargo audit --deny warnings` detected vulnerabilities in backend dependencies.
 
-            - The actual fix usually means bumping the affected crate versions in `Cargo.toml`.
+            - The actual fix means bumping the affected crate versions in `Cargo.toml`.
             - Please review `cargo audit` output, update dependencies, run `cargo update`,
               then `cargo fmt && cargo clippy && cargo test` before merging.
 
             > This workflow opens a report PR only; it does not auto-edit `Cargo.toml` to avoid
-            > introducing breaking changes.
+            > introducing breaking changes. The audit job fails on purpose until the tree is clean.
           labels: |
             dependencies
             security
