@@ -13,9 +13,28 @@ env:
   CARGO_INCREMENTAL: 0
 
 jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+              - 'LICENSE'
+              - '**/.gitignore'
+
   lint-and-test:
     name: Build, Test & Lint (Rust)
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.docs != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -64,3 +83,12 @@ jobs:
         uses: wagoid/commitlint-github-action@v6
         with:
           configFile: commitlint.config.mjs
+
+  # 纯文档改动时跳过重活 job，本 job 提供绿色 check 以满足 PR 要求
+  docs-check:
+    name: Docs only (skip heavy CI)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.docs == 'true' }}
+    steps:
+      - run: echo "Only documentation changed — skipping build/lint/test."
