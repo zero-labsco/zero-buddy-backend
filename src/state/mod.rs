@@ -1,7 +1,7 @@
-use crate::cache::AnswerCache;
 use crate::config::Config;
 use crate::llm::LlmClient;
-use crate::ratelimit::RateLimiter;
+use crate::rate_limit::RateLimiter;
+use crate::retrieval::AnswerCache;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 

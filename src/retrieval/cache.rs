@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::llm::LlmClient;
-use crate::rag::cosine;
+use crate::retrieval::rag::cosine;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;

@@ -1,10 +1,7 @@
-use crate::cache::AnswerCache;
 use crate::config::Config;
-use crate::faq::FaqStore;
-use crate::knowledge::{load, retrieve};
 use crate::llm::LlmClient;
 use crate::models::{ChatRequest, Document};
-use crate::rag::retrieve_scored;
+use crate::retrieval::{load, retrieve, retrieve_scored, AnswerCache, FaqStore};
 use anyhow::Result;
 use serde_json::json;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -35,7 +32,7 @@ pub async fn handle_chat(
     client: &LlmClient,
     cache: &AnswerCache,
     online: Arc<AtomicBool>,
-    limiter: &crate::ratelimit::RateLimiter,
+    limiter: &crate::rate_limit::RateLimiter,
     client_ip: &str,
     req: ChatRequest,
 ) -> Result<serde_json::Value> {

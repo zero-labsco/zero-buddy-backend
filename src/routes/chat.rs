@@ -1,7 +1,7 @@
 //! chat 模块的路由定义与请求处理器。
 use crate::chat::handle_chat;
-use crate::error::{ApiCode, ApiError, ApiResult};
 use crate::models::ChatRequest;
+use crate::response::{ApiCode, ApiError, ApiResult};
 use crate::state::AppState;
 use axum::extract::connect_info::ConnectInfo;
 use axum::extract::State;

@@ -1,22 +1,20 @@
-mod cache;
-mod chat;
-mod config;
-mod error;
-mod faq;
-mod knowledge;
-mod llm;
-mod logging;
-mod models;
-mod rag;
-mod ratelimit;
-mod routes;
-mod state;
+// 子模块声明：按职责分组，避免 src 根目录堆积过多文件。
+mod chat; // 聊天编排（handle_chat 管线）
+mod config; // 配置（Config + ScopeMode）
+mod llm; // LLM 客户端（LlmClient）
+mod logging; // 日志初始化
+mod models; // 共享数据模型（ChatMessage / ChatRequest / Document）
+mod rate_limit; // 速率限制（RateLimiter）
+mod response; // 统一响应信封（ApiResult / ApiCode / ApiError）
+mod retrieval; // 知识检索：knowledge / rag / faq / cache
+mod routes; // HTTP 路由（chat / health）
+mod state; // 应用共享状态（AppState）
 
 use axum::http::Method;
 use axum::serve::serve;
-use cache::AnswerCache;
 use config::Config;
 use llm::LlmClient;
+use retrieval::AnswerCache;
 use state::AppState;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -65,7 +63,7 @@ async fn main() {
         client,
         cache,
         online: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(online)),
-        rate_limiter: ratelimit::RateLimiter::new(),
+        rate_limiter: rate_limit::RateLimiter::new(),
     };
 
     // CORS：收敛到指定前端来源，而非任意来源

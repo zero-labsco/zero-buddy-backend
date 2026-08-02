@@ -1,5 +1,5 @@
 //! health 模块的路由定义与请求处理器。
-use crate::error::{ok_empty, ApiResult};
+use crate::response::{ok_empty, ApiResult};
 use crate::state::AppState;
 use axum::routing::get;
 use axum::Json;
