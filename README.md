@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Zero%20Buddy-Backend-5eead4?style=for-the-badge" alt="Zero Buddy Backend" />
-  <img src="https://img.shields.io/badge/Rust-1.97-000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+  <img src="https://img.shields.io/badge/Rust-000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
   <img src="https://img.shields.io/badge/Axum-Web%20Framework-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Axum" />
   <img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=for-the-badge" alt="License" />
 </p>
@@ -8,8 +8,7 @@
 <h1 align="center">Zero Buddy Backend</h1>
 
 <p align="center">
-  The AI assistant backend for Zero Labs — answering questions about the Zero
-  Inspector Kit, Flutter Agent Kit, WizardPlayer, and Invoice Zero.
+  The AI assistant backend for Zero Labs — answering questions about the Zero Labs.
 </p>
 
 <p align="center">

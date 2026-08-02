@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Zero%20Buddy-%E5%90%8E%E7%AB%AF%20Backend-5eead4?style=for-the-badge" alt="Zero Buddy 后端" />
-  <img src="https://img.shields.io/badge/Rust-1.97-000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+  <img src="https://img.shields.io/badge/Rust-000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
   <img src="https://img.shields.io/badge/Axum-Web%20Framework-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Axum" />
   <img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=for-the-badge" alt="License" />
 </p>
@@ -8,8 +8,7 @@
 <h1 align="center">Zero Buddy 后端 (Backend)</h1>
 
 <p align="center">
-  Zero Labs 的 AI 助手后端，回答关于 Zero Inspector Kit、Flutter Agent Kit、
-  WizardPlayer、Invoice Zero 的问题。
+  Zero Labs 的 AI 助手后端，回答关于 Zero Labs 的问题。
 </p>
 
 <p align="center">
