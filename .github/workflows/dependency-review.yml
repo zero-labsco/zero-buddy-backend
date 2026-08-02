@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           # 仅拦截高危/严重；中低危不阻断（由 cargo audit 周任务跟进）
           fail-on-severity: high

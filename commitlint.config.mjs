@@ -22,5 +22,8 @@ export default {
     ],
     'subject-case': [0],
     'header-max-length': [2, 'always', 100],
+    // Dependabot 自动升级 PR 的 body 含长 URL，放宽以避免误拒
+    'body-max-line-length': [0],
+    'footer-max-line-length': [0],
   },
 };
