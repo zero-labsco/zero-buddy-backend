@@ -26,3 +26,7 @@ Thumbs.db
 *.log
 backend.out.log
 backend.err.log
+
+# JetBrains IDE (IntelliJ / CLion / RustRover) — local config only
+.idea/
+*.iml
