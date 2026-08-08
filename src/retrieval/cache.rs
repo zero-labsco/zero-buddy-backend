@@ -187,3 +187,84 @@ impl AnswerCache {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // 测试用缓存：指向临时目录，避免污染真实 data/answers_cache.json
+    fn test_cache(version: &str) -> AnswerCache {
+        let path = std::env::temp_dir().join(format!("zb_test_cache_{version}.json"));
+        let _ = std::fs::remove_file(&path);
+        AnswerCache {
+            inner: Arc::new(AnswerCacheInner {
+                version: version.to_string(),
+                map: Mutex::new(HashMap::new()),
+                path,
+            }),
+        }
+    }
+
+    // embed 请求会发到 base_url；用不可达端口让 embed 立即失败（无网络依赖）
+    fn offline_client() -> LlmClient {
+        let cfg = Config {
+            llm_base_url: "http://127.0.0.1:9/v1".into(),
+            ..Config::default()
+        };
+        LlmClient::new(cfg)
+    }
+
+    #[test]
+    fn normalize_collapses_case_and_whitespace() {
+        assert_eq!(normalize("  Hello   World "), "hello world");
+        assert_eq!(normalize("ZeroBuddy"), "zerobuddy");
+        assert_eq!(normalize("what   is  zero buddy?"), "what is zero buddy?");
+    }
+
+    #[tokio::test]
+    async fn exact_match_returns_cached_reply() {
+        let c = test_cache("v-exact");
+        let client = offline_client();
+        c.put_offline("What is Zero Buddy?", "Zero Buddy is an AI assistant.")
+            .await;
+        let got = c.get(&client, "What is Zero Buddy?", 0.92).await;
+        assert_eq!(got.as_deref(), Some("Zero Buddy is an AI assistant."));
+    }
+
+    #[tokio::test]
+    async fn normalized_query_hits_exact_key() {
+        let c = test_cache("v-norm");
+        let client = offline_client();
+        c.put_offline("What is  Zero Buddy?", "answer here").await;
+        // 归一化后（空白折叠）应命中同一 key
+        let got = c.get(&client, "what is zero buddy?", 0.92).await;
+        assert_eq!(got.as_deref(), Some("answer here"));
+    }
+
+    #[tokio::test]
+    async fn miss_returns_none_when_not_cached() {
+        let c = test_cache("v-miss");
+        let client = offline_client();
+        // embed 不可达 -> 精确/语义均无命中 -> None
+        let got = c.get(&client, "completely unrelated question", 0.92).await;
+        assert!(got.is_none());
+    }
+
+    #[test]
+    fn empty_cache_has_no_entries() {
+        let c = test_cache("v-empty");
+        assert!(c.inner.map.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn cache_version_mismatch_loads_fresh() {
+        // 模拟 CACHE_VERSION 变更后整体失效
+        let client = offline_client();
+        let c1 = test_cache("v-old");
+        c1.put_offline("same query", "old answer").await;
+        // 用新版本构建（map 从空开始，等同版本不匹配 -> fresh）
+        let c2 = test_cache("v-new");
+        let got = c2.get(&client, "same query", 0.92).await;
+        assert!(got.is_none(), "新版本缓存不应包含旧版本条目");
+    }
+}

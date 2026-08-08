@@ -66,3 +66,64 @@ pub fn tokenize(text: &str) -> HashSet<String> {
         .map(|s| s.to_string())
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cosine_identical_vectors_is_one() {
+        let v = [1.0, 2.0, 3.0, 4.0];
+        assert!((cosine(&v, &v) - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_orthogonal_is_zero() {
+        assert!(cosine(&[1.0, 0.0], &[0.0, 1.0]).abs() < 1e-6);
+    }
+
+    #[test]
+    fn cosine_zero_vector_is_zero() {
+        assert_eq!(cosine(&[0.0, 0.0], &[1.0, 1.0]), 0.0);
+        assert_eq!(cosine(&[1.0, 1.0], &[0.0, 0.0]), 0.0);
+    }
+
+    #[test]
+    fn cosine_similar_vs_dissimilar() {
+        // 同向向量相似度高于反向向量
+        let a = [1.0, 1.0, 1.0];
+        let b = [2.0, 2.0, 2.0]; // 与 a 同向
+        let c = [-1.0, -1.0, -1.0]; // 与 a 反向
+        assert!(cosine(&a, &b) > cosine(&a, &c));
+        assert!((cosine(&a, &c) + 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn tokenize_lowercases_and_filters_short() {
+        let t = tokenize("Hello Flutter and Dart");
+        assert!(t.contains("hello"));
+        assert!(t.contains("flutter"));
+        assert!(t.contains("dart"));
+        assert!(t.contains("and"), "3 字母词 'and' 应被保留");
+        assert!(!t.contains("he"), "2 字母短词应被过滤");
+    }
+
+    #[test]
+    fn score_keyword_overlap_ratio() {
+        // 全部重叠 -> 1.0
+        assert_eq!(
+            score_keyword("zero buddy install", "zero buddy install"),
+            1.0
+        );
+        // 重叠 2/3（zero、buddy 命中）-> 2/3
+        let s = score_keyword("zero buddy deploy", "zero buddy install");
+        assert!((s - 2.0 / 3.0).abs() < 1e-6, "实际 = {s}");
+        // 无重叠 -> 0
+        assert_eq!(score_keyword("abc def", "xyz qrs"), 0.0);
+    }
+
+    #[test]
+    fn score_keyword_empty_query_is_zero() {
+        assert_eq!(score_keyword("anything here", ""), 0.0);
+    }
+}

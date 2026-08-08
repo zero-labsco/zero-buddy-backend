@@ -307,3 +307,80 @@ fn read_f32(key: &str, default: f32) -> f32 {
         .and_then(|v| v.parse().ok())
         .unwrap_or(default)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn has_valid_key() {
+        // 占位符 / 空串视为无效
+        assert!(!Config::default().has_valid_key());
+        let placeholder = Config {
+            llm_api_key: "sk-your-key-here".to_string(),
+            ..Config::default()
+        };
+        assert!(!placeholder.has_valid_key(), "占位符 key 应视为无效");
+        let real = Config {
+            llm_api_key: "sk-real-key-123".to_string(),
+            ..Config::default()
+        };
+        assert!(real.has_valid_key(), "真实格式 key 应有效");
+    }
+
+    #[test]
+    fn in_scope_matches_keyword_ci() {
+        let c = Config {
+            scope_allow_keywords: vec!["flutter".into(), "zerobuddy".into(), "invoice".into()],
+            scope_allow_patterns: vec![],
+            ..Config::default()
+        };
+        // 关键词大小写不敏感、子串匹配
+        assert!(c.in_scope("How to use Flutter Agent Kit?"));
+        assert!(c.in_scope("flutter 部署"));
+        assert!(c.in_scope("tell me about zerobuddy"));
+        assert!(c.in_scope("invoice zero pricing"));
+        assert!(!c.in_scope("what's the weather today?"));
+    }
+
+    #[test]
+    fn in_scope_matches_regex_pattern() {
+        let c = Config {
+            scope_allow_keywords: vec![],
+            scope_allow_patterns: vec![
+                r"(?i)wizard[\s-]?player".into(),
+                r"(?i)zerolabsco\.com".into(),
+            ],
+            ..Config::default()
+        };
+        assert!(c.in_scope("Tell me about WizardPlayer"));
+        assert!(c.in_scope("visit zerolabsco.com"));
+        assert!(!c.in_scope("soccer rules"));
+    }
+
+    #[test]
+    fn in_scope_empty_lists_allow_all() {
+        let c = Config {
+            scope_allow_keywords: vec![],
+            scope_allow_patterns: vec![],
+            ..Config::default()
+        };
+        // 关键词与正则都为空 -> 全部放行（避免误伤）
+        assert!(c.in_scope("any random question"));
+    }
+
+    #[test]
+    fn scope_mode_from_str() {
+        assert_eq!(ScopeMode::from_str("hard"), ScopeMode::Hard);
+        assert_eq!(ScopeMode::from_str("HARD"), ScopeMode::Hard);
+        assert_eq!(ScopeMode::from_str("prompt"), ScopeMode::Prompt);
+        assert_eq!(ScopeMode::from_str(""), ScopeMode::Prompt);
+        assert_eq!(ScopeMode::from_str("garbage"), ScopeMode::Prompt);
+    }
+
+    #[test]
+    fn default_config_is_http_base_url() {
+        // from_env 会拒绝非 http(s) 的 base URL；默认值本身必须是合法的
+        assert!(Config::default().llm_base_url.starts_with("https://"));
+    }
+}

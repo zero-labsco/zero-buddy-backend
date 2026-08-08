@@ -69,6 +69,57 @@ jobs:
       - name: Test
         run: cargo test --verbose
 
+  api-integration:
+    name: API Integration Test (offline)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.docs != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock', 'Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build
+        run: cargo build
+
+      - name: Setup Node (for test script)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Start backend & run API integration test
+        # CI 无 LLM_API_KEY -> 离线模式；ALLOW_OFFLINE=1 让 LLM 路径用例接受 source=offline。
+        # 功能测试实例限流放宽，另起 3031 限流专用实例（RATE_LIMIT_PER_MIN=10）。
+        run: |
+          RATE_LIMIT_PER_MIN=100 ./target/debug/zero-buddy-backend > /tmp/backend-a.log 2>&1 &
+          A=$!
+          BIND_ADDR=127.0.0.1:3031 RATE_LIMIT_PER_MIN=10 ./target/debug/zero-buddy-backend > /tmp/backend-b.log 2>&1 &
+          B=$!
+          trap 'kill $A $B 2>/dev/null || true' EXIT
+          for i in $(seq 1 90); do
+            curl -sf http://127.0.0.1:3030/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          BASE_URL=http://127.0.0.1:3030 \
+          RATE_LIMIT_URL=http://127.0.0.1:3031 \
+          ALLOW_OFFLINE=1 \
+          node scripts/api_integration_test.mjs
+
   commit-lint:
     name: Commit Message Lint
     runs-on: ubuntu-latest

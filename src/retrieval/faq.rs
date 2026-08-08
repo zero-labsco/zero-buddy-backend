@@ -25,6 +25,30 @@ fn default_match() -> String {
     "contains".to_string()
 }
 
+/// 判断查询是否命中某个触发词。
+///
+/// - 单个 ASCII 单词（如 "hi"/"ty"/"yo"）：用**词边界**匹配，
+///   避免子串误报 —— 例如 "which" 含 "hi"、"support" 含 "sup"、"city" 含 "ty"、
+///   "your" 含 "yo"，会被误当成打招呼/道谢。
+/// - 多词短语与含 CJK 的触发词：保留子串匹配（CJK 无空格分词，词边界不适用；
+///   短语如 "good morning" 以整串命中）。
+fn pattern_hit(query: &str, pattern: &str) -> bool {
+    let p = pattern.to_lowercase();
+    let is_single_ascii_word = !p.is_empty()
+        && p.chars().all(|c| c.is_ascii_alphanumeric())
+        && !p.contains(char::is_whitespace);
+    if is_single_ascii_word {
+        // 用 \b 锚定整个单词；正则构造失败时退化为子串匹配，保证不误伤
+        let re = regex::Regex::new(&format!(r"\b{}\b", regex::escape(&p)));
+        match re {
+            Ok(re) => re.is_match(query),
+            Err(_) => query.contains(&p),
+        }
+    } else {
+        query.contains(&p)
+    }
+}
+
 // 从 JSON 加载到内存的 FAQ 规则集合
 pub struct FaqStore {
     rules: Vec<FaqRule>,
@@ -73,10 +97,11 @@ impl FaqStore {
                             first == p || q == p || q.starts_with(&format!("{p} "))
                         })
                     }
-                    "regex" => rule.patterns.iter().any(|p| q.contains(&p.to_lowercase())),
+                    "regex" => rule.patterns.iter().any(|p| pattern_hit(q, p)),
                     _ => {
                         // 默认 contains：查询包含任意 pattern 即命中
-                        rule.patterns.iter().any(|p| q.contains(&p.to_lowercase()))
+                        // （单个 ASCII 单词用词边界匹配，见 pattern_hit）
+                        rule.patterns.iter().any(|p| pattern_hit(q, p))
                     }
                 };
                 if hit {
@@ -87,5 +112,130 @@ impl FaqStore {
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rule(id: &str, r#match: &str, patterns: &[&str], reply: &str) -> FaqRule {
+        FaqRule {
+            id: id.to_string(),
+            r#match: r#match.to_string(),
+            patterns: patterns.iter().map(|s| s.to_string()).collect(),
+            reply: reply.to_string(),
+            url: None,
+        }
+    }
+
+    fn store() -> FaqStore {
+        FaqStore {
+            rules: vec![
+                rule(
+                    "greeting-en",
+                    "contains",
+                    &["hello", "hi", "hey", "yo", "sup"],
+                    "Hi there!",
+                ),
+                rule(
+                    "thanks-en",
+                    "contains",
+                    &["thank", "thanks", "ty"],
+                    "You're welcome!",
+                ),
+                rule(
+                    "install-en",
+                    "contains",
+                    &[
+                        "how to install zero inspector kit",
+                        "setup zero inspector kit",
+                    ],
+                    "Install steps here",
+                ),
+                rule("goodbye-en", "starts_with", &["bye", "goodbye"], "See you!"),
+                rule("greeting-zh", "contains", &["你好", "哈喽"], "你好呀！"),
+            ],
+        }
+    }
+
+    // —— pattern_hit 词边界修复：短 ASCII 单词不得命中其所在单词的子串 ——
+    #[test]
+    fn hi_does_not_match_substring_inside_other_words() {
+        // 回归：这些词含 "hi"/"which" 子串，但不应命中打招呼
+        assert!(!pattern_hit("which product does zero labs make", "hi"));
+        assert!(!pattern_hit(
+            "describe the architecture of zero buddy",
+            "hi"
+        ));
+        assert!(!pattern_hit("caching layers", "hi"));
+    }
+
+    #[test]
+    fn hi_matches_standalone_word() {
+        assert!(pattern_hit("hi there", "hi"));
+        assert!(pattern_hit("just say hi to the team", "hi"));
+    }
+
+    #[test]
+    fn sup_does_not_match_support() {
+        assert!(!pattern_hit("customer support email", "sup"));
+        assert!(pattern_hit("sup how are you", "sup"));
+    }
+
+    #[test]
+    fn ty_does_not_match_city() {
+        assert!(!pattern_hit("what is the city of invoice zero", "ty"));
+        assert!(pattern_hit("ty for your help", "ty"));
+    }
+
+    #[test]
+    fn multiword_phrase_still_substring() {
+        // 多词短语保持子串匹配：整串出现即命中
+        assert!(pattern_hit(
+            "please tell me how to install zero inspector kit",
+            "how to install zero inspector kit"
+        ));
+    }
+
+    // —— FaqStore::answer 端到端：问候语不再误伤技术问题 ——
+    #[test]
+    fn greeting_does_not_hijack_technical_questions() {
+        let s = store();
+        assert!(s
+            .answer("What does Zero Buddy's architecture look like?")
+            .is_none());
+        assert!(s.answer("Which products does Zero Labs make?").is_none());
+    }
+
+    #[test]
+    fn greeting_matches_real_hello() {
+        let s = store();
+        let got = s.answer("Hi, are you there?");
+        assert_eq!(got.as_ref().map(|(r, _)| r.as_str()), Some("Hi there!"));
+    }
+
+    #[test]
+    fn install_phrase_matches() {
+        let s = store();
+        let got = s.answer("How to install Zero Inspector Kit?");
+        assert_eq!(
+            got.as_ref().map(|(r, _)| r.as_str()),
+            Some("Install steps here")
+        );
+    }
+
+    #[test]
+    fn starts_with_matches_first_word() {
+        let s = store();
+        let got = s.answer("Goodbye my friend");
+        assert_eq!(got.as_ref().map(|(r, _)| r.as_str()), Some("See you!"));
+    }
+
+    #[test]
+    fn cjk_patterns_still_match() {
+        let s = store();
+        let got = s.answer("你好，Zero Buddy 在吗？");
+        assert_eq!(got.as_ref().map(|(r, _)| r.as_str()), Some("你好呀！"));
     }
 }

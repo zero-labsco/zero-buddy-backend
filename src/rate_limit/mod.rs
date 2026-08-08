@@ -99,3 +99,79 @@ impl Default for RateLimiter {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn minute_limit_rejects_after_limit() {
+        let l = RateLimiter::new();
+        let ip = "1.2.3.4";
+        // per_min=2
+        assert!(l.check_and_record(ip, 2, 0));
+        assert!(l.check_and_record(ip, 2, 0));
+        assert!(!l.check_and_record(ip, 2, 0), "第 3 个应被每分钟限流拒绝");
+    }
+
+    #[test]
+    fn day_limit_rejects_after_limit() {
+        let l = RateLimiter::new();
+        let ip = "5.6.7.8";
+        assert!(l.check_and_record(ip, 0, 3));
+        assert!(l.check_and_record(ip, 0, 3));
+        assert!(l.check_and_record(ip, 0, 3));
+        assert!(!l.check_and_record(ip, 0, 3), "第 4 个应被每日限流拒绝");
+    }
+
+    #[test]
+    fn zero_limits_means_no_limit() {
+        let l = RateLimiter::new();
+        let ip = "9.9.9.9";
+        for _ in 0..100 {
+            assert!(l.check_and_record(ip, 0, 0), "limit=0 应永不拒绝");
+        }
+    }
+
+    #[test]
+    fn different_ips_are_counted_independently() {
+        let l = RateLimiter::new();
+        assert!(l.check_and_record("a", 1, 0));
+        assert!(!l.check_and_record("a", 1, 0), "ip a 的第 2 次应被拒");
+        assert!(l.check_and_record("b", 1, 0), "ip b 不受 ip a 影响");
+    }
+
+    #[test]
+    fn minute_window_slides_after_60s() {
+        let l = RateLimiter::new();
+        let ip = "1.1.1.1";
+        assert!(l.check_and_record(ip, 1, 0));
+        assert!(!l.check_and_record(ip, 1, 0), "窗口内第 2 次应被拒");
+        // 模拟 61 秒过去：直接把窗口内的时间戳改为 61s 前的旧值
+        {
+            let mut map = l.state.lock().unwrap();
+            let entry = map.get_mut(ip).expect("entry 应存在");
+            let old = entry.minute[0].saturating_sub(61_000);
+            entry.minute[0] = old;
+        }
+        // 清理旧记录后应重新放行
+        assert!(l.check_and_record(ip, 1, 0), "61s 后窗口应滑动放行");
+    }
+
+    #[test]
+    fn day_count_resets_when_crossing_day() {
+        let l = RateLimiter::new();
+        let ip = "2.2.2.2";
+        // 先塞满每日计数
+        assert!(l.check_and_record(ip, 0, 1));
+        assert!(!l.check_and_record(ip, 0, 1), "当日第 2 次应被拒");
+        // 模拟跨天：把 day_key 改成前一天的 key（today_key() 的数值 -1）
+        let today: u64 = today_key().parse().expect("today_key 应为数字");
+        {
+            let mut map = l.state.lock().unwrap();
+            let entry = map.get_mut(ip).expect("entry 应存在");
+            entry.day_key = (today - 1).to_string();
+        }
+        assert!(l.check_and_record(ip, 0, 1), "跨天应重置每日计数");
+    }
+}
