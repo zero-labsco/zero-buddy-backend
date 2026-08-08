@@ -200,7 +200,7 @@ pub async fn handle_chat(
     // 即便 RAG 命中了泛化的产品列表文档，官网内容也能补充「收费/套餐」等细节，避免回答「没有相关信息」。
     let mut ctx = ctx;
     let mut ctx_from_web = false;
-    let web_ctx = crate::web_search::fetch_zero_labs_context().await;
+    let web_ctx = crate::retrieval::fetch_zero_labs_context().await;
     if !web_ctx.is_empty() {
         if ctx.is_empty() {
             ctx = format!(
@@ -490,7 +490,7 @@ pub async fn handle_chat_stream(
     // 联网兜底：始终尝试抓取官网/GitHub/Invoice Zero 内容并追加到 ctx（与 handle_chat 一致）
     let mut ctx = ctx;
     let mut ctx_from_web = false;
-    let web_ctx = crate::web_search::fetch_zero_labs_context().await;
+    let web_ctx = crate::retrieval::fetch_zero_labs_context().await;
     if !web_ctx.is_empty() {
         if ctx.is_empty() {
             ctx = format!(

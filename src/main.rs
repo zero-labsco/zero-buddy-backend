@@ -6,10 +6,9 @@ mod logging; // 日志初始化
 mod models; // 共享数据模型（ChatMessage / ChatRequest / Document）
 mod rate_limit; // 速率限制（RateLimiter）
 mod response; // 统一响应信封（ApiResult / ApiCode / ApiError）
-mod retrieval; // 知识检索：knowledge / rag / faq / cache
+mod retrieval; // 知识检索：knowledge / rag / faq / cache / 运行时联网兜底
 mod routes; // HTTP 路由（chat / health）
 mod state; // 应用共享状态（AppState）
-mod web_search; // 运行时联网兜底（抓取官网/GitHub 作为上下文）
 
 use axum::http::Method;
 use axum::serve::serve;
