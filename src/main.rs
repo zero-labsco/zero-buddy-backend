@@ -9,6 +9,7 @@ mod response; // 统一响应信封（ApiResult / ApiCode / ApiError）
 mod retrieval; // 知识检索：knowledge / rag / faq / cache
 mod routes; // HTTP 路由（chat / health）
 mod state; // 应用共享状态（AppState）
+mod web_search; // 运行时联网兜底（抓取官网/GitHub 作为上下文）
 
 use axum::http::Method;
 use axum::serve::serve;

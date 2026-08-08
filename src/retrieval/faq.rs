@@ -46,26 +46,44 @@ impl FaqStore {
         let q = query.to_lowercase();
         let q = q.trim();
 
-        for rule in &self.rules {
-            let hit = match rule.r#match.as_str() {
-                "starts_with" => {
-                    // 首词匹配：查询的首词等于某 pattern，或查询以 "pattern " 开头
-                    let first = q.split_whitespace().next().unwrap_or("");
-                    rule.patterns.iter().any(|p| {
-                        let p = p.to_lowercase();
-                        first == p || q == p || q.starts_with(&format!("{p} "))
-                    })
+        // 语言偏好：检测查询是否含 CJK（中日韩）字符，含则优先匹配中文条目，
+        // 否则优先匹配非中文条目。这样可避免中英文共享同一 pattern 时误命中错语言。
+        let prefer_cjk = query.chars().any(|c| {
+            ('\u{4e00}'..='\u{9fff}').contains(&c)
+                || ('\u{3040}'..='\u{30ff}').contains(&c)
+                || ('\u{ac00}'..='\u{d7af}').contains(&c)
+        });
+
+        // 两遍扫描：第一遍仅看偏好语言的条目，第二遍回退到全部条目
+        for pass in 0..2 {
+            for rule in &self.rules {
+                let rule_is_cjk = rule
+                    .reply
+                    .chars()
+                    .any(|c| ('\u{4e00}'..='\u{9fff}').contains(&c));
+                if pass == 0 && rule_is_cjk != prefer_cjk {
+                    continue; // 第一遍只匹配偏好语言
                 }
-                "regex" => rule.patterns.iter().any(|p| q.contains(&p.to_lowercase())),
-                _ => {
-                    // 默认 contains：查询包含任意 pattern 即命中
-                    rule.patterns.iter().any(|p| q.contains(&p.to_lowercase()))
+                let hit = match rule.r#match.as_str() {
+                    "starts_with" => {
+                        // 首词匹配：查询的首词等于某 pattern，或查询以 "pattern " 开头
+                        let first = q.split_whitespace().next().unwrap_or("");
+                        rule.patterns.iter().any(|p| {
+                            let p = p.to_lowercase();
+                            first == p || q == p || q.starts_with(&format!("{p} "))
+                        })
+                    }
+                    "regex" => rule.patterns.iter().any(|p| q.contains(&p.to_lowercase())),
+                    _ => {
+                        // 默认 contains：查询包含任意 pattern 即命中
+                        rule.patterns.iter().any(|p| q.contains(&p.to_lowercase()))
+                    }
+                };
+                if hit {
+                    // 仅当 url 非空才随回答带回，避免向前端传递空链接
+                    let url = rule.url.as_ref().filter(|u| !u.trim().is_empty()).cloned();
+                    return Some((rule.reply.clone(), url));
                 }
-            };
-            if hit {
-                // 仅当 url 非空才随回答带回，避免向前端传递空链接
-                let url = rule.url.as_ref().filter(|u| !u.trim().is_empty()).cloned();
-                return Some((rule.reply.clone(), url));
             }
         }
         None

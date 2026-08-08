@@ -94,5 +94,53 @@
     "title": "GitHub 开源仓库",
     "content": "Zero Labs 的源码托管在 GitHub：https://github.com/zero-labsco。欢迎 Star、提交 Issue 与 Pull Request，参与开源共建。",
     "url": "https://github.com/zero-labsco"
+  },
+  {
+    "id": "zero-inspector-kit-en",
+    "title": "Zero Inspector Kit",
+    "content": "Zero Inspector Kit is an in-app debugging toolkit for Flutter apps by Zero Labs. It runs inside your Flutter application and lets developers inspect network requests, logs, local database, performance metrics (FPS, memory, CPU), and UI widget tree in real time without needing a separate debugger or IDE plugin. It is distributed as a pub.dev package and is open source under GPL-3.0.",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-zh",
+    "title": "Zero Inspector Kit 介绍",
+    "content": "Zero Inspector Kit 是 Zero Labs 推出的一款 Flutter 应用内调试工具包。它以内嵌方式运行在你的 Flutter 应用中，帮助开发者实时查看网络请求、日志、本地数据库、性能指标（FPS、内存、CPU）以及 UI 组件树，无需额外连接独立的调试器或 IDE 插件。它以 pub.dev 包形式分发，采用 GPL-3.0 开源协议。",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-setup-en",
+    "title": "Zero Inspector Kit Integration",
+    "content": "How to integrate Zero Inspector Kit (based on v1.3.2; check pub.dev for the latest): 1) Add dependency: zero_inspector_kit: ^1.3.2 (or run: flutter pub add zero_inspector_kit). 2) Install: flutter pub get. 3) Initialize with the zero-intrusion one-liner: import 'package:zero_inspector_kit/zero_inspector_kit.dart'; void main() { ZeroInspectorKit.runAppWithInspector(const MyApp()); }. For more control use the two-line form: ZeroInspectorKit.init(); runApp(ZeroInspectorKit.wrapApp(const MyApp()));. 4) Optional route tracking: add navigatorObservers: [InspectorRouteObserver()] to MaterialApp. After integration a draggable floating button shows via Overlay automatically; it captures print()/errors, intercepts http and Dio requests, and scans SQLite databases. It auto-disables in Release mode so you don't need to remove the code. Full docs: https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-setup-zh",
+    "title": "Zero Inspector Kit 集成指南",
+    "content": "Zero Inspector Kit 集成步骤（基于 v1.3.2，最新版以 pub.dev 为准）：1) 添加依赖：zero_inspector_kit: ^1.3.2，或在项目根目录执行 flutter pub add zero_inspector_kit。2) 安装：flutter pub get。3) 初始化（零侵入一行式）：import 'package:zero_inspector_kit/zero_inspector_kit.dart'; void main() { ZeroInspectorKit.runAppWithInspector(const MyApp()); }。两行式：ZeroInspectorKit.init(); runApp(ZeroInspectorKit.wrapApp(const MyApp()));。4) 路由跟踪（可选）：在 MaterialApp 中加 navigatorObservers: [InspectorRouteObserver()]。集成后调试悬浮按钮通过 Overlay 自动显示（可拖拽停靠）；自动捕获 print()/错误、拦截 http 与 Dio 请求、扫描 SQLite 数据库。Release 模式自动禁用，无需手动移除代码。完整文档：https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "flutter-agent-kit-en",
+    "title": "Flutter Agent Kit",
+    "content": "Flutter Agent Kit is a tool-agnostic guidance kit for Flutter / Dart development by Zero Labs. It ships one core guide, AGENTS.md (the single source of truth), plus a CodeBuddy SKILL.md wrapper, reference docs under references/, and Dart/Python helper scripts. Install: git clone https://github.com/zero-labsco/flutter-agent-kit.git then run 'dart run install.dart' (Dart) or 'python install.py' (Python) from the kit folder. The installer auto-detects and wires into CodeBuddy (~/.codebuddy/skills/), Claude Code (~/.claude/skills/), Cursor (.cursorrules), or GitHub Copilot (.github/copilot-instructions.md); use -t <tool> to target one, -p <path> for a specific project. MIT licensed.",
+    "url": "https://github.com/zero-labsco/flutter-agent-kit"
+  },
+  {
+    "id": "flutter-agent-kit-zh",
+    "title": "Flutter Agent Kit",
+    "content": "Flutter Agent Kit 是 Zero Labs 推出的、工具无关的 Flutter / Dart 开发引导套件。核心是单一真相源 AGENTS.md，外加 CodeBuddy 专用的 SKILL.md 包装、references/ 参考文档，以及 Dart/Python 辅助脚本。安装：git clone https://github.com/zero-labsco/flutter-agent-kit.git，在套件目录运行 dart run install.dart（Dart）或 python install.py（Python）。安装脚本会自动检测并接入 CodeBuddy（~/.codebuddy/skills/）、Claude Code（~/.claude/skills/）、Cursor（.cursorrules）或 GitHub Copilot（.github/copilot-instructions.md）；可用 -t <tool> 指定单一工具、-p <path> 指定项目。采用 MIT 开源协议。",
+    "url": "https://github.com/zero-labsco/flutter-agent-kit"
+  },
+  {
+    "id": "invoice-zero-en",
+    "title": "Invoice Zero",
+    "content": "Invoice Zero is a closed-source, commercial invoice/receipt/quote management app built with Flutter by Zero Labs. Core features: create/edit invoices, quotes (报价) and receipts (收据); PDF export & share; electronic signature & stamp (电子签名/盖章, free); multi-language (EN/ZH); local-only storage (no cloud); multi-currency; tax & discount calculation; PDF template selection. Plan tiers (confirmed from source code): FREE users can use all creation/editing, signature, stamp, local storage, multi-language features, but are LIMITED to 5 PDF exports/shares per month (shared quota; over-limit triggers an upgrade dialog; bonus exports can be granted). PREVIEW (预览) is Pro-exclusive. PRO (US$5.99/mo or US$54.99/yr in closed beta) unlocks: unlimited exports/shares, Preview feature (no-watermark), and other Pro benefits. CLOSED BETA (封测) — currently only two paid plans in USD: Monthly US$5.99/mo, Yearly US$54.99/yr (~US$4.58/mo; yearly cheaper). No other tiers. Access by invite only, not public app stores. Source code not public. Refer to invoicezero.net.",
+    "url": "https://invoicezero.net"
+  },
+  {
+    "id": "invoice-zero-zh",
+    "title": "Invoice Zero",
+    "content": "Invoice Zero 是 Zero Labs 用 Flutter 打造的闭源商业（非开源）发票/收据/报价管理应用。核心功能：创建/编辑发票、报价（quote）与收据（receipt）；PDF 导出与分享；电子签名与盖章（免费）；多语言（中/英）；数据完全本地存储（无云端）；多货币；税率与折扣计算；PDF 模板选择。套餐分档（依据源码确认）：【免费用户】可使用全部创建/编辑、电子签名、盖章、本地存储、多语言等功能，但【每月仅限 5 次 PDF 导出/分享】（共享额度，超额弹升级提示；可发放额外导出次数 bonus）；【预览（Preview）为 Pro 独占】。【Pro 会员】（封测价 US$5.99/月 或 US$54.99/年）解锁：无限导出/分享、预览功能（去水印）及其他会员权益。封测（closed beta）阶段仅有这两个美元付费套餐，无其他档位，获取为受邀内测、不在公开商店上架。源代码不公开。详见 invoicezero.net。",
+    "url": "https://invoicezero.net"
   }
 ]

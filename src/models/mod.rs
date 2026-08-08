@@ -16,10 +16,11 @@ pub struct ChatRequest {
 // 知识库中的一条可检索文档（对应 knowledge.json 中的一项）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
-    pub id: String,          // 文档唯一标识（如 org-overview）
-    pub project: String,     // 所属项目名
-    pub title: String,       // 文档标题
-    pub content: String,     // 文档正文
+    pub id: String, // 文档唯一标识（如 org-overview）
+    #[serde(default)]
+    pub project: String, // 所属项目名（可选，缺省为空串）
+    pub title: String, // 文档标题
+    pub content: String, // 文档正文
     pub url: Option<String>, // 相关链接（可选）
     #[serde(default)]
     pub embedding: Vec<f32>, // 预计算向量（来自 embeddings.json），可由 build 步骤注入

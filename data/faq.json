@@ -109,6 +109,84 @@
     "reply": "Zero Labs 专注于开源开发者工具与应用，主要项目包括：\n• Zero Inspector Kit —— Flutter 应用内调试器（网络、日志、数据库、内存、帧率）\n• Flutter Agent Kit —— 跨工具 AI 开发工具包（AGENTS.md + 脚本）\n• WizardPlayer —— 跨平台视频与种子播放器\n• Invoice Zero —— 面向自由职业者的发票应用\n了解更多：https://zerolabsco.com 或 github.com/zero-labsco。"
   },
   {
+    "id": "zero-inspector-kit-setup-zh",
+    "match": "contains",
+    "patterns": [
+      "zero inspector kit 怎么集成",
+      "zero inspector kit 怎么安装",
+      "zero inspector kit 怎么用",
+      "zero inspector kit 初始化",
+      "zero inspector kit 配置",
+      "集成 zero inspector kit",
+      "安装 zero inspector kit",
+      "inspector kit 怎么用",
+      "inspector kit 初始化",
+      "inspector kit 怎么集成",
+      "flutter 调试器 怎么集成",
+      "flutter 调试器 怎么用",
+      "inspector kit 接进去",
+      "inspector kit 接入",
+      "inspector kit 怎么用起来",
+      "初始化调试器",
+      "怎么把调试器接进项目",
+      "集成到我的项目",
+      "怎么初始化 zero inspector kit"
+    ],
+    "reply": "Zero Inspector Kit 集成步骤（基于 v1.3.2，最新版以 pub.dev 为准）：\n\n1. 添加依赖：\n   dependencies:\n     zero_inspector_kit: ^1.3.2\n   或在项目根目录执行：flutter pub add zero_inspector_kit\n\n2. 安装：flutter pub get\n\n3. 初始化（零侵入，推荐一行式）：\n   import 'package:zero_inspector_kit/zero_inspector_kit.dart';\n   void main() {\n     ZeroInspectorKit.runAppWithInspector(const MyApp());\n   }\n   如需更多控制，可用两行式：\n   void main() {\n     ZeroInspectorKit.init();\n     runApp(ZeroInspectorKit.wrapApp(const MyApp()));\n   }\n\n4. 路由跟踪（可选）：在 MaterialApp 中加 navigatorObservers: [InspectorRouteObserver()]。\n\n集成后，调试悬浮按钮会自动通过 Overlay 显示（可拖拽停靠）；自动捕获 print()/错误、拦截 http 与 Dio 请求、扫描 SQLite 数据库。Release 模式下会自动禁用，无需手动移除代码。\n完整文档：https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-setup-en",
+    "match": "contains",
+    "patterns": [
+      "how to integrate zero inspector kit",
+      "how to install zero inspector kit",
+      "how to use zero inspector kit",
+      "zero inspector kit setup",
+      "zero inspector kit init",
+      "zero inspector kit initialize",
+      "zero inspector kit configuration",
+      "setup zero inspector kit",
+      "install zero inspector kit",
+      "how to use inspector kit",
+      "inspector kit setup",
+      "inspector kit init",
+      "add inspector kit to my app",
+      "integrate the debugger",
+      "how to initialize zero inspector kit",
+      "how do i use zero inspector kit",
+      "wire up zero inspector kit"
+    ],
+    "reply": "How to integrate Zero Inspector Kit (based on v1.3.2; check pub.dev for the latest):\n\n1. Add the dependency:\n   dependencies:\n     zero_inspector_kit: ^1.3.2\n   Or run in your project root: flutter pub add zero_inspector_kit\n\n2. Install: flutter pub get\n\n3. Initialize (zero-intrusion, recommended one-liner):\n   import 'package:zero_inspector_kit/zero_inspector_kit.dart';\n   void main() {\n     ZeroInspectorKit.runAppWithInspector(const MyApp());\n   }\n   For more control, use the two-line form:\n   void main() {\n     ZeroInspectorKit.init();\n     runApp(ZeroInspectorKit.wrapApp(const MyApp()));\n   }\n\n4. Route tracking (optional): add navigatorObservers: [InspectorRouteObserver()] to your MaterialApp.\n\nAfter integration, a draggable floating button shows up via Overlay automatically; it captures print()/errors, intercepts http and Dio requests, and scans SQLite databases. It auto-disables in Release mode, so you don't need to remove the code. Full docs: https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-zh",
+    "match": "contains",
+    "patterns": [
+      "zero inspector kit",
+      "inspector kit",
+      "zero inspector",
+      "flutter 调试器",
+      "flutter 应用内调试"
+    ],
+    "reply": "Zero Inspector Kit 是 Zero Labs 为 Flutter 应用打造的一款应用内调试工具包。它以内嵌方式运行在你的 Flutter 应用中，可实时查看网络请求、日志、本地数据库、性能指标（FPS、内存、CPU）以及 UI 组件树。它以 pub.dev 包形式分发，采用 GPL-3.0 开源协议。了解更多：https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
+    "id": "zero-inspector-kit-en",
+    "match": "contains",
+    "patterns": [
+      "zero inspector kit",
+      "inspector kit",
+      "what is zero inspector kit",
+      "zero inspector",
+      "flutter debugger"
+    ],
+    "reply": "Zero Inspector Kit is an in-app debugging toolkit for Flutter apps by Zero Labs. It runs inside your Flutter app and lets you inspect network requests, logs, local database, performance metrics (FPS, memory, CPU), and the UI widget tree in real time. It is distributed on pub.dev and open sourced under GPL-3.0. Learn more: https://pub.dev/packages/zero_inspector_kit",
+    "url": "https://pub.dev/packages/zero_inspector_kit"
+  },
+  {
     "id": "contact-en",
     "match": "contains",
     "patterns": [
@@ -143,6 +221,46 @@
     "url": "mailto:contact@zerolabsco.com"
   },
   {
+    "id": "invoice-zero-zh",
+    "match": "contains",
+    "patterns": [
+      "invoice zero",
+      "开票",
+      "发票应用",
+      "invoicezero",
+      "invoice zero 开源",
+      "invoice zero 是开源",
+      "invoice zero 收费吗",
+      "invoice zero 多少钱",
+      "invoice zero 有什么功能",
+      "invoice zero 功能",
+      "免费功能",
+      "会员功能",
+      "invoice zero 免费"
+    ],
+    "reply": "Invoice Zero 是 Zero Labs 用 Flutter 打造的闭源商业产品（非开源）发票/收据/报价管理应用。\n【功能分档】\n免费可用：发票/报价/收据的创建与编辑、电子签名与盖章、多语言（中/英）、数据完全本地存储（无云端）、多货币、税率与折扣计算、PDF 模板选择。\n非会员但有限制：PDF 导出/分享每月仅 5 次（共享额度，超额弹升级提示，可获赠额外次数）。\n会员(Pro)专属：预览（Preview）功能，以及无限导出/分享、去水印等权益。\n【封测定价】目前仅两个美元套餐：月付 US$5.99/月、年付 US$54.99/年（折合约 US$4.58/月，年付更划算），无其他档位。获取为受邀内测，不在公开商店上架。具体获取/价格请以官网 invoicezero.net 为准；源代码不公开。",
+    "url": "https://invoicezero.net"
+  },
+  {
+    "id": "invoice-zero-en",
+    "match": "contains",
+    "patterns": [
+      "invoice zero",
+      "invoicezero",
+      "invoicing app",
+      "freelance invoice",
+      "is invoice zero open source",
+      "invoice zero pricing",
+      "invoice zero cost",
+      "invoice zero features",
+      "what can invoice zero do",
+      "free features",
+      "pro features"
+    ],
+    "reply": "Invoice Zero is a closed-source, commercial Flutter app (not open source) by Zero Labs for invoice, receipt, and quote management.\n[Feature tiers]\nFree: create/edit invoices, quotes and receipts; electronic signature & stamp; multi-language (EN/ZH); local-only storage (no cloud); multi-currency; tax & discount; PDF template selection.\nFree-but-limited: PDF export/share limited to 5 times per month (shared quota; over-limit shows an upgrade dialog; bonus exports may be granted).\nPro-only: Preview feature, plus unlimited exports/shares, no-watermark, and other Pro benefits.\n[Closed-beta pricing] Only two USD plans: Monthly US$5.99/mo, Yearly US$54.99/yr (~US$4.58/mo; yearly cheaper). No other tiers. Access by invite only, not public app stores. For current access/pricing refer to invoicezero.net. Source code is not public.",
+    "url": "https://invoicezero.net"
+  },
+  {
     "id": "github-en",
     "match": "contains",
     "patterns": [
@@ -152,7 +270,7 @@
       "source code",
       "source"
     ],
-    "reply": "All Zero Labs projects are open source on GitHub: https://github.com/zero-labsco",
+    "reply": "Most Zero Labs developer projects are open source on GitHub: https://github.com/zero-labsco (e.g. Zero Buddy, Zero Inspector Kit, Flutter Agent Kit). Note: Invoice Zero is a closed-source commercial product and is not on GitHub. For its source availability, refer to invoicezero.net.",
     "url": "https://github.com/zero-labsco"
   },
   {
@@ -165,7 +283,7 @@
       "代码仓库",
       "源码"
     ],
-    "reply": "Zero Labs 的源码托管在 GitHub：https://github.com/zero-labsco，欢迎 Star、提交 Issue 或参与贡献！",
+    "reply": "Zero Labs 的大部分开发者项目都开源并托管在 GitHub：https://github.com/zero-labsco（如 Zero Buddy、Zero Inspector Kit、Flutter Agent Kit），欢迎 Star、提交 Issue 或参与贡献！注意：Invoice Zero 是闭源商业产品，不在 GitHub 上。",
     "url": "https://github.com/zero-labsco"
   },
   {
@@ -217,6 +335,32 @@
       "配置"
     ],
     "reply": "你想安装哪个项目？Zero Inspector Kit（pub.dev）、Flutter Agent Kit（install.dart/install.py）、WizardPlayer（GitHub Releases），还是 Invoice Zero（invoicezero.net）？"
+  },
+  {
+    "id": "flutter-agent-kit-zh",
+    "match": "contains",
+    "patterns": [
+      "flutter agent kit",
+      "agent kit",
+      "flutter 智能体",
+      "flutter agent 怎么装",
+      "agent kit 是什么"
+    ],
+    "reply": "Flutter Agent Kit 是 Zero Labs 推出的、工具无关的 Flutter / Dart 开发引导套件，核心是单一真相源 AGENTS.md（外加 CodeBuddy 的 SKILL.md、references/ 文档和 Dart/Python 辅助脚本）。安装：先 git clone https://github.com/zero-labsco/flutter-agent-kit.git，然后在套件目录运行 dart run install.dart（Dart）或 python install.py（Python）。安装脚本会自动检测并接入 CodeBuddy（~/.codebuddy/skills/）、Claude Code（~/.claude/skills/）、Cursor（.cursorrules）或 GitHub Copilot（.github/copilot-instructions.md）；可用 -t <tool> 指定单一工具、-p <项目路径> 指定目标项目。采用 MIT 开源协议。",
+    "url": "https://github.com/zero-labsco/flutter-agent-kit"
+  },
+  {
+    "id": "flutter-agent-kit-en",
+    "match": "contains",
+    "patterns": [
+      "flutter agent kit",
+      "agent kit",
+      "what is agent kit",
+      "how to install agent kit",
+      "flutter agent toolkit"
+    ],
+    "reply": "Flutter Agent Kit is a tool-agnostic Flutter / Dart development guidance kit by Zero Labs. Its core is AGENTS.md (single source of truth), plus a CodeBuddy SKILL.md wrapper, reference docs under references/, and Dart/Python helper scripts. Install: git clone https://github.com/zero-labsco/flutter-agent-kit.git, then run 'dart run install.dart' (Dart) or 'python install.py' (Python) from the kit folder. The installer auto-detects and wires into CodeBuddy (~/.codebuddy/skills/), Claude Code (~/.claude/skills/), Cursor (.cursorrules), or GitHub Copilot (.github/copilot-instructions.md); use -t <tool> to target one tool, -p <path> for a project. MIT licensed.",
+    "url": "https://github.com/zero-labsco/flutter-agent-kit"
   },
   {
     "id": "license-en",
