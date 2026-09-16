@@ -106,7 +106,9 @@ jobs:
         # CI 无 LLM_API_KEY -> 离线模式；ALLOW_OFFLINE=1 让 LLM 路径用例接受 source=offline。
         # 功能测试实例限流放宽，另起 3031 限流专用实例（RATE_LIMIT_PER_MIN=10）。
         run: |
-          RATE_LIMIT_PER_MIN=100 ./target/debug/zero-buddy-backend > /tmp/backend-a.log 2>&1 &
+          # 两个实例都必须显式指定 BIND_ADDR：后端默认端口为 3030，
+          # 若不指定，功能实例会占用 3031 而与限流实例冲突（脚本等待的 3030 永远起不来）。
+          BIND_ADDR=127.0.0.1:3030 RATE_LIMIT_PER_MIN=100 ./target/debug/zero-buddy-backend > /tmp/backend-a.log 2>&1 &
           A=$!
           BIND_ADDR=127.0.0.1:3031 RATE_LIMIT_PER_MIN=10 ./target/debug/zero-buddy-backend > /tmp/backend-b.log 2>&1 &
           B=$!

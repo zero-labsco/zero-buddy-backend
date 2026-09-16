@@ -101,16 +101,46 @@ async fn main() {
         // 让 handler 能拿到真实客户端 IP（ConnectInfo<SocketAddr>）
         .into_make_service_with_connect_info::<SocketAddr>();
 
-    let bind = std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3031".into());
-    let listener = match tokio::net::TcpListener::bind(&bind).await {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!("failed to bind {}: {}", bind, e);
-            std::process::exit(1);
+    // 监听地址（与 README / .env.example 的约定保持一致）：
+    // - 显式设置了 BIND_ADDR：只用它，端口被占用就直接报错退出（行为可预期）。
+    // - 未设置：默认 127.0.0.1:3030，若被占用则回退到 127.0.0.1:3031。
+    let bind = std::env::var("BIND_ADDR").ok();
+    let (bind_addr, listener) = match bind {
+        Some(addr) => match tokio::net::TcpListener::bind(&addr).await {
+            Ok(l) => (addr, l),
+            Err(e) => {
+                tracing::error!("failed to bind {}: {}", addr, e);
+                std::process::exit(1);
+            }
+        },
+        None => {
+            const PRIMARY: &str = "127.0.0.1:3030";
+            const FALLBACK: &str = "127.0.0.1:3031";
+            match tokio::net::TcpListener::bind(PRIMARY).await {
+                Ok(l) => (PRIMARY.to_string(), l),
+                Err(e) => {
+                    tracing::warn!(
+                        "failed to bind {} ({}), falling back to {}",
+                        PRIMARY,
+                        e,
+                        FALLBACK
+                    );
+                    match tokio::net::TcpListener::bind(FALLBACK).await {
+                        Ok(l) => (FALLBACK.to_string(), l),
+                        Err(e) => {
+                            tracing::error!("failed to bind {}: {}", FALLBACK, e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
         }
     };
-    info!("{} backend listening on http://{}", cfg.product_name, bind);
-    print_banner(&cfg.product_name, &bind, online);
+    info!(
+        "{} backend listening on http://{}",
+        cfg.product_name, bind_addr
+    );
+    print_banner(&cfg.product_name, &bind_addr, online);
 
     // 优雅关闭：同时等待服务运行与关闭信号（Ctrl+C / SIGTERM）。
     // 收到信号时主动退出，打印友好提示并以状态码 0 结束，
