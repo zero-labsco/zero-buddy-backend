@@ -1,19 +1,20 @@
 name: Dependency Review
 
-# 安全门禁：在 PR 合并前检查依赖变更是否引入高危/严重漏洞（含 RUSTSEC advisories）。
-# 覆盖所有来源（含 Dependabot 自动拉取的“最新版”PR）—— 任何带高危/严重漏洞的更新
-# 都会被此门禁挡下，确保“先安全、再最新版”，不安全的版本无法合入。
+# 安全门禁：在 PR 合并前用 cargo audit 检查依赖是否带已知漏洞（RUSTSEC advisories）。
+# 任何带已知漏洞的更新都会被此门禁挡下，确保“先安全、再最新版”。
+#
+# 之前使用 actions/dependency-review-action，但它依赖仓库的 Dependency graph
+# （/dependency-graph/compare API）。本仓库该 API 返回 404，且设置页没有对应开关，
+# action 会直接失败并提示 "Dependency review is not supported on this repository"。
+# 改用 cargo audit：只依赖 Cargo.lock，无需任何仓库设置。
+# unmaintained / yanked 等警告不阻断 PR（由 audit.yml 周任务以 --deny warnings 跟进）。
 
-# 注意：本门禁依赖仓库的 Dependency graph（Settings → Code security and analysis →
-# Dependency graph）处于开启状态；未开启时 action 会直接失败并提示
-# "Dependency review is not supported on this repository"。
 on:
   pull_request:
     branches: ['main']
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   dependency-review:
@@ -23,11 +24,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v5
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
         with:
-          # 仅拦截高危/严重；中低危不阻断（由 cargo audit 周任务跟进）
-          fail-on-severity: high
-          fail-on-scopes: 'runtime,development'
-          comment-summary-in-pr: true
-          warn-on-openssf-scorecard-level: 'high'
+          tool: cargo-audit
+
+      - name: Audit dependencies (RUSTSEC gate)
+        run: cargo audit
