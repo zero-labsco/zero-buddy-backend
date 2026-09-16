@@ -393,9 +393,13 @@ async function testLargeBody() {
     'Content-Type': 'application/json',
     'Content-Length': String(Buffer.byteLength(fullBody)),
   }, fullBody);
+  // 服务端在收到中段超大 body 时会提前关闭连接，客户端可能收到 ECONNRESET
+  // (curl) 或 EPIPE (Node 写完对端已关闭的 socket)；两者都表示“服务端拒绝超 body”，
+  // 与 413 等价，均视为通过。
+  const refused = b.error === 'ECONNRESET' || b.error === 'EPIPE';
   record(
     '实际传 >1MB body：得到 413 或连接中断(服务端拒绝)',
-    b.status === 413 || b.error === 'ECONNRESET',
+    b.status === 413 || refused,
     `status=${b.status} error=${b.error ?? '-'}`,
   );
 }
