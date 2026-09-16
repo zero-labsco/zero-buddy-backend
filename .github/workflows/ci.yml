@@ -118,6 +118,18 @@ jobs:
             curl -sf http://127.0.0.1:3030/health >/dev/null 2>&1 && curl -sf http://127.0.0.1:3031/health >/dev/null 2>&1 && break
             sleep 1
           done
+          # 未就绪时把后端日志与端口占用情况以 annotation 形式输出，
+          # 否则只能看到脚本的“120s 未就绪”，无法定位真实原因。
+          if ! curl -sf http://127.0.0.1:3030/health >/dev/null 2>&1; then
+            echo "::error::backend A (3030) not ready - head of /tmp/backend-a.log:"
+            head -n 25 /tmp/backend-a.log | sed 's/^/::error:: /'
+            echo "::error::listening ports:"
+            (ss -ltnp 2>/dev/null || netstat -ltnp) | head -n 15 | sed 's/^/::error:: /'
+          fi
+          if ! curl -sf http://127.0.0.1:3031/health >/dev/null 2>&1; then
+            echo "::error::backend B (3031) not ready - head of /tmp/backend-b.log:"
+            head -n 25 /tmp/backend-b.log | sed 's/^/::error:: /'
+          fi
           BASE_URL=http://127.0.0.1:3030 \
           RATE_LIMIT_URL=http://127.0.0.1:3031 \
           ALLOW_OFFLINE=1 \
