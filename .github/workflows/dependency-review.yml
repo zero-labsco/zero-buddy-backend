@@ -4,6 +4,9 @@ name: Dependency Review
 # 覆盖所有来源（含 Dependabot 自动拉取的“最新版”PR）—— 任何带高危/严重漏洞的更新
 # 都会被此门禁挡下，确保“先安全、再最新版”，不安全的版本无法合入。
 
+# 注意：本门禁依赖仓库的 Dependency graph（Settings → Code security and analysis →
+# Dependency graph）处于开启状态；未开启时 action 会直接失败并提示
+# "Dependency review is not supported on this repository"。
 on:
   pull_request:
     branches: ['main']
@@ -27,4 +30,4 @@ jobs:
           fail-on-severity: high
           fail-on-scopes: 'runtime,development'
           comment-summary-in-pr: true
-          warn-on-openssf-scorecard-severity: 'high'
+          warn-on-openssf-scorecard-level: 'high'

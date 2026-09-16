@@ -8,6 +8,19 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+/// SSE 流的本体类型：`Pin<Box<dyn Stream<Item = Result<Event, Infallible>> + Send>>`。
+/// 抽成别名提升可读性，同时避免 `clippy::type_complexity` 在 `-D warnings` 下报错。
+pub type SseStream = Pin<
+    Box<
+        dyn futures_core::Stream<
+                Item = Result<axum::response::sse::Event, std::convert::Infallible>,
+            > + Send,
+    >,
+>;
+
+/// 全站统一使用的 SSE 响应类型（非流式接口与流式接口共用）。
+pub type SseResponse = axum::response::sse::Sse<SseStream>;
+
 // 粗略判断文本是否包含中文（CJK）字符，用于离线兜底文案的语言选择。
 fn is_cjk(text: &str) -> bool {
     text.chars().any(|c| {
@@ -21,29 +34,9 @@ fn is_cjk(text: &str) -> bool {
 /// 用于 FAQ / 缓存 / 离线 / scope-guard 等原本一次性返回的整段答案，
 /// 让前端获得与 LLM 流式一致的分批显示体验。前端 onDelta 会累加增量，
 /// 因此这里每次 delta 只携带“新增片段”而非整段。
-fn streamed_reply(
-    text: String,
-    source: String,
-    url: Option<String>,
-) -> axum::response::sse::Sse<
-    Pin<
-        Box<
-            dyn futures_core::Stream<
-                    Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                > + Send,
-        >,
-    >,
-> {
+fn streamed_reply(text: String, source: String, url: Option<String>) -> SseResponse {
     use axum::response::sse::{Event, KeepAlive, Sse};
-    let s: Sse<
-        Pin<
-            Box<
-                dyn futures_core::Stream<
-                        Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                    > + Send,
-            >,
-        >,
-    > = Sse::new(Box::pin(async_stream::stream! {
+    let s: SseResponse = Sse::new(Box::pin(async_stream::stream! {
         // 按字符切片，每块最多 CHUNK 个字符，间隔 SLEEP_MS 毫秒，模拟打字节奏。
         const CHUNK: usize = 4;
         const SLEEP_MS: u64 = 12;
@@ -354,15 +347,7 @@ pub async fn handle_chat_stream(
     limiter: &crate::rate_limit::RateLimiter,
     client_ip: &str,
     req: ChatRequest,
-) -> axum::response::sse::Sse<
-    Pin<
-        Box<
-            dyn futures_core::Stream<
-                    Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                > + Send,
-        >,
-    >,
-> {
+) -> SseResponse {
     use axum::response::sse::{Event, KeepAlive, Sse};
     use std::convert::Infallible;
 
@@ -372,15 +357,7 @@ pub async fn handle_chat_stream(
 
     // 复用前段逻辑（与 handle_chat 对齐）；prepare 阶段出错时直接以 error 事件结束流。
     let prepare_err = |msg: String| {
-        let s: Sse<
-            Pin<
-                Box<
-                    dyn futures_core::Stream<
-                            Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                        > + Send,
-                >,
-            >,
-        > = Sse::new(Box::pin(async_stream::stream! {
+        let s: SseResponse = Sse::new(Box::pin(async_stream::stream! {
             yield Ok::<_, Infallible>(Event::default().data(
                 serde_json::json!({ "type": "error", "message": msg }).to_string(),
             ));
@@ -630,15 +607,7 @@ pub async fn handle_chat_stream(
         }
     });
 
-    let s: Sse<
-        Pin<
-            Box<
-                dyn futures_core::Stream<
-                        Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                    > + Send,
-            >,
-        >,
-    > = Sse::new(Box::pin(async_stream::stream! {
+    let s: SseResponse = Sse::new(Box::pin(async_stream::stream! {
         // 先发一个空 delta 让前端立即进入"生成中"状态，避免首字延迟期间的空白
         yield Ok::<_, Infallible>(sse_event(serde_json::json!({ "type": "delta", "content": "" })));
         while let Some(chunk) = rx.recv().await {

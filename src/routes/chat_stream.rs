@@ -20,15 +20,7 @@ async fn chat_stream_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(req): Json<ChatRequest>,
-) -> axum::response::sse::Sse<
-    std::pin::Pin<
-        Box<
-            dyn futures_core::Stream<
-                    Item = Result<axum::response::sse::Event, std::convert::Infallible>,
-                > + Send,
-        >,
-    >,
-> {
+) -> crate::chat::SseResponse {
     let ip = addr.ip().to_string();
     handle_chat_stream(
         &state.cfg,

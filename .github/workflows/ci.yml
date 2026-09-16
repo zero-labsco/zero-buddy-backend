@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             docs:
@@ -98,7 +98,7 @@ jobs:
         run: cargo build
 
       - name: Setup Node (for test script)
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -111,14 +111,24 @@ jobs:
           BIND_ADDR=127.0.0.1:3031 RATE_LIMIT_PER_MIN=10 ./target/debug/zero-buddy-backend > /tmp/backend-b.log 2>&1 &
           B=$!
           trap 'kill $A $B 2>/dev/null || true' EXIT
+          # 两个实例都要等就绪：3030 跑功能用例，3031 专门跑限流用例（10/min）。
           for i in $(seq 1 90); do
-            curl -sf http://127.0.0.1:3030/health >/dev/null 2>&1 && break
+            curl -sf http://127.0.0.1:3030/health >/dev/null 2>&1 && curl -sf http://127.0.0.1:3031/health >/dev/null 2>&1 && break
             sleep 1
           done
           BASE_URL=http://127.0.0.1:3030 \
           RATE_LIMIT_URL=http://127.0.0.1:3031 \
           ALLOW_OFFLINE=1 \
           node scripts/api_integration_test.mjs
+          STATUS=$?
+          # 失败时把两个实例的日志打出来，便于定位“后端未就绪 / 用例失败”的具体原因。
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::group::backend logs"
+            tail -n 100 /tmp/backend-a.log
+            tail -n 100 /tmp/backend-b.log
+            echo "::endgroup::"
+          fi
+          exit $STATUS
 
   commit-lint:
     name: Commit Message Lint
